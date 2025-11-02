@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
 import '../../shared/widgets/AppDrawer.dart';
+import '../pricing/pricing_page.dart';
+import '../../shared/widgets/ad_manager.dart';
+import '../../main.dart';
 import 'widgets/AiModelSelector.dart';
 import 'widgets/ChatInput.dart';
 import 'widgets/MessageBubble.dart';
@@ -25,10 +28,14 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  // CHAT ACTION: Interstitial Ad is triggered here
   void _handleOpenConversation() {
     setState(() {
       isEmpty = false;
     });
+
+    // Trigger the interstitial ad logic defined in AdManager
+    AdManager.of(context)?.showInterstitialAd();
   }
 
   void _showHistoryBottomSheet() {
@@ -50,6 +57,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    // The Banner Ad is now handled by the AdManager widget wrapping this page in main.dart
     return Scaffold(
       appBar: _buildAppBar(),
       drawer: const SafeArea(child: AppDrawer()),
@@ -69,26 +77,34 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    // Check global Pro status to conditionally display the Upgrade button
+    final bool isPro = MyApp.of(context).isProUser;
+
     return AppBar(
       actions: [
-        // Upgrade button
-        TextButton(
-          onPressed: () {},
-          child: Row(
-            children: [
-              Text(
-                'Upgrade',
-                style: TextStyle(
-                  color: Colors.blue.shade700,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
+        // Upgrade button (hidden if user is Pro)
+        if (!isPro)
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const PricingPage()),
+              );
+            },
+            child: Row(
+              children: [
+                Text(
+                  'Upgrade',
+                  style: TextStyle(
+                    color: Colors.blue.shade700,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Icon(Icons.rocket_launch, color: Colors.blue.shade700, size: 20),
-            ],
+                const SizedBox(width: 4),
+                Icon(Icons.rocket_launch, color: Colors.blue.shade700, size: 20),
+              ],
+            ),
           ),
-        ),
         // Profile Avatar
         Padding(
           padding: const EdgeInsets.only(right: 16, left: 8),
@@ -115,7 +131,7 @@ class _ChatPageState extends State<ChatPage> {
         ),
         MessageBubble(
           message:
-              "Flutter is Google's UI toolkit for building beautiful, natively compiled applications for mobile, web, and desktop from a single codebase.",
+          "Flutter is Google's UI toolkit for building beautiful, natively compiled applications for mobile, web, and desktop from a single codebase.",
           isUser: false,
         ),
       ],
@@ -157,7 +173,7 @@ class _ChatPageState extends State<ChatPage> {
         ),
         const SizedBox(height: 6),
         ChatInputBox(
-          onSend: _handleOpenConversation,
+          onSend: _handleOpenConversation, // Triggers ad logic
           onUpload: _showUploadBottomSheet,
         ),
       ],

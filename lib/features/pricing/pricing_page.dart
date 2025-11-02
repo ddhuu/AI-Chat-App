@@ -3,6 +3,7 @@ import 'package:ai_chat_assistant/features/pricing/widgets/pricing_card.dart';
 import 'package:ai_chat_assistant/features/pricing/widgets/pricing_header.dart';
 import 'package:ai_chat_assistant/features/pricing/widgets/monetization_ad_slot.dart';
 import 'package:flutter/material.dart';
+import '../../main.dart';
 
 class PricingPage extends StatefulWidget {
   const PricingPage({super.key});
@@ -13,16 +14,28 @@ class PricingPage extends StatefulWidget {
 
 class _PricingPageState extends State<PricingPage> {
 
+  // Local state mirroring global state for UI updates
   bool _isPro = false;
   int _currentTokens = 50;
 
-  void _upgradeToPro() {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize local state based on global state when the page opens
+    _isPro = MyApp.of(context).isProUser;
+    // Mock token count for Free users
+    _currentTokens = _isPro ? 999999 : 50;
+  }
 
+  void _upgradeToPro() {
+    // 1. Update local state
     setState(() {
       _isPro = true;
-
-      _currentTokens = 999999;
+      _currentTokens = 999999; // Mock "Unlimited"
     });
+
+    // 2. UPDATE GLOBAL STATE (in MyApp)
+    MyApp.of(context).setIsProUser(true);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Upgrade successful! Welcome to Jarvis Pro!')),
@@ -67,6 +80,7 @@ class _PricingPageState extends State<PricingPage> {
         isFeatured: true,
         buttonText: _isPro ? 'Activated' : 'Upgrade Now',
 
+        // Only allow upgrade if the user is not Pro
         onTap: _isPro ? null : _upgradeToPro,
       ),
     ];
@@ -81,7 +95,7 @@ class _PricingPageState extends State<PricingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-
+            // Account Status Bar
             AccountStatus(isPro: _isPro, currentTokens: _currentTokens),
             const SizedBox(height: 30),
 
