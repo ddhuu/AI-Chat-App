@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
 
+// Define the signature for the functions passed from ChatPage
+typedef UploadAction = Future<void> Function();
+
 class UploadOptionsSheet extends StatelessWidget {
-  const UploadOptionsSheet({super.key});
+  final UploadAction onGalleryUpload;
+  final UploadAction onCameraCapture;
+  final UploadAction onPasteScreenshot;
+
+  const UploadOptionsSheet({
+    super.key,
+    required this.onGalleryUpload,
+    required this.onCameraCapture,
+    required this.onPasteScreenshot,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,31 +30,34 @@ class UploadOptionsSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 1. Upload image/file from gallery (Upload image to chat)
             _buildOption(
               context,
               icon: Icons.image,
-              title: 'Upload image',
-              onTap: () {
+              title: 'Upload Image from Gallery',
+              onTap: () async {
                 Navigator.pop(context);
-                // Handle upload image
+                await onGalleryUpload();
               },
             ),
+            // 2. Take a new photo (Capture image and chat with it)
             _buildOption(
               context,
               icon: Icons.camera_alt,
-              title: 'Take photo',
-              onTap: () {
+              title: 'Take New Photo (Camera)',
+              onTap: () async {
                 Navigator.pop(context);
-                // Handle take photo
+                await onCameraCapture();
               },
             ),
+            // 3. Paste image from Clipboard (Screenshot and chat)
             _buildOption(
               context,
-              icon: Icons.terminal,
-              title: 'Prompt',
-              onTap: () {
+              icon: Icons.content_paste,
+              title: 'Paste Image / Screenshot',
+              onTap: () async {
                 Navigator.pop(context);
-                // Handle prompt
+                await onPasteScreenshot();
               },
             ),
           ],
@@ -51,12 +66,17 @@ class UploadOptionsSheet extends StatelessWidget {
     );
   }
 
+  // Reusable widget builder for each upload option item
   Widget _buildOption(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(leading: Icon(icon), title: Text(title), onTap: onTap);
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required VoidCallback onTap,
+      }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.blue.shade700),
+      title: Text(title),
+      onTap: onTap,
+    );
   }
 }
