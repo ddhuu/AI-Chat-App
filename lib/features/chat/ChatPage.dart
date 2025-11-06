@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard (used in screenshot mock)
 import '../../core/constants/colors.dart';
 import '../../shared/widgets/AppDrawer.dart';
-import '../pricing/pricing_page.dart';
-import '../../shared/widgets/ad_manager.dart';
+import '../pricing/pages/pricing_page.dart';
 import '../../main.dart';
 import 'widgets/AiModelSelector.dart';
 import 'widgets/ChatInput.dart';
@@ -52,8 +51,8 @@ class _ChatPageState extends State<ChatPage> {
       isEmpty = false;
     });
 
-    // Trigger the interstitial ad logic defined in AdManager
-    AdManager.of(context)?.showInterstitialAd();
+    // TODO: Trigger the interstitial ad logic defined in AdManager
+    // AdManager.of(context)?.showInterstitialAd();
   }
 
   void _showHistoryBottomSheet() {

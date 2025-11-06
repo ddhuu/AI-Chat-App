@@ -5,6 +5,7 @@ import '../../chat/widgets/MessageBubble.dart';
 import '../../chat/widgets/AiModelSelector.dart';
 import '../../chat/widgets/ChatInput.dart';
 import '../../chat/widgets/Upload.dart';
+import '../../pricing/pages/pricing_page.dart';
 
 class ChatWithBotPage extends StatefulWidget {
   final BotModel bot;
@@ -65,7 +66,38 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
   void _showUploadBottomSheet() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => const UploadOptionsSheet(),
+      builder: (context) => UploadOptionsSheet(
+        onGalleryUpload: () async {
+          // Mock gallery upload
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Tính năng upload từ gallery đang phát triển'),
+              ),
+            );
+          }
+        },
+        onCameraCapture: () async {
+          // Mock camera capture
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Tính năng chụp ảnh đang phát triển'),
+              ),
+            );
+          }
+        },
+        onPasteScreenshot: () async {
+          // Mock paste screenshot
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Tính năng paste screenshot đang phát triển'),
+              ),
+            );
+          }
+        },
+      ),
       barrierColor: Colors.black.withOpacity(0.2),
     );
   }
@@ -125,7 +157,14 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
       actions: [
         // Upgrade button
         TextButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PricingPage(),
+              ),
+            );
+          },
           child: Row(
             children: [
               Text(
