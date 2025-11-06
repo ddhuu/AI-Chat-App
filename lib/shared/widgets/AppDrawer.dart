@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/strings.dart';
+import '../../features/bot/pages/bot_list_page.dart';
+import '../../features/chat/ChatPage.dart';
+import '../../features/auth/pages/auth_page.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -59,17 +62,39 @@ class AppDrawer extends StatelessWidget {
           _DrawerMenuItem(
             icon: Icons.home_outlined,
             title: AppStrings.home,
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatPage()),
+                (route) => false,
+              );
+            },
           ),
           _DrawerMenuItem(
             icon: Icons.chat_bubble_outline,
             title: AppStrings.chat,
-            onTap: () {},
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatPage()),
+                (route) => false,
+              );
+            },
           ),
           _DrawerMenuItem(
             icon: Icons.smart_toy_outlined,
             title: AppStrings.bot,
-            onTap: () {},
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BotListPage(),
+                ),
+              );
+            },
           ),
           _DrawerMenuItem(
             icon: Icons.library_books_outlined,
@@ -85,9 +110,29 @@ class AppDrawer extends StatelessWidget {
           const Divider(height: 1, color: AppColors.divider),
 
           _DrawerMenuItem(
+            icon: Icons.login_outlined,
+            title: AppStrings.signInSignUp,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AuthPage(),
+                ),
+              );
+            },
+          ),
+          _DrawerMenuItem(
             icon: Icons.logout_outlined,
             title: AppStrings.logout,
-            onTap: () {},
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(AppStrings.logoutSuccess),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            },
             textColor: AppColors.error,
           ),
         ],
