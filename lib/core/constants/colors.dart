@@ -29,4 +29,13 @@ class AppColors {
   // Token counter
   static const Color tokenBackground = Color(0xFFFFF5F5);
   static const Color tokenText = Color(0xFFE53E3E);
+
+
+  // static const Color primary = Color(0xFF3B82F6); // Xanh dương cho nút
+  static const Color sidebarBackground = Color(0xFFF0F4F9); // Nền sidebar
+  static const Color contentBackground = Colors.white; // Nền nội dung
+  // static const Color textPrimary = Color(0xFF1F2937); // Đen đậm
+  // static const Color textSecondary = Color(0xFF6B7280); // Xám
+  static const Color textLink = primary; // Màu link
+  static const Color border = Color(0xFFE5E7EB); // Màu viền
 }

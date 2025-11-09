@@ -1,3 +1,4 @@
+import 'package:ai_chat_assistant/features/knowledge/knowledge_list_screen.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/strings.dart';
@@ -90,16 +91,22 @@ class AppDrawer extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const BotListPage(),
-                ),
+                MaterialPageRoute(builder: (context) => const BotListPage()),
               );
             },
           ),
           _DrawerMenuItem(
             icon: Icons.library_books_outlined,
             title: AppStrings.knowledge,
-            onTap: () {},
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const KnowledgeListScreen(),
+                ),
+              );
+            },
           ),
           _DrawerMenuItem(
             icon: Icons.explore_outlined,
@@ -116,9 +123,7 @@ class AppDrawer extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const AuthPage(),
-                ),
+                MaterialPageRoute(builder: (context) => const AuthPage()),
               );
             },
           ),
