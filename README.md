@@ -1,16 +1,20 @@
-# ai_chat_assistant
+# Advanced Mobile Programming - Final Project
 
-A new Flutter project.
+## Team Information
+**Course:** Advanced Mobile Programming  
+**Project Milestone:** Milestone 1
 
-## Getting Started
+### Team Members
+- **21120460** - Nguyễn Tấn Hùng
+- **21120465** - Đoàn Đức Hữu  
+- **21120393** - Nguyễn Hữu Thương
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## Milestone 1 
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### 📋 Widget Tree
+*[https://drive.google.com/file/d/146XdVLBF0ttgex6uvje3wiPmPMl5r3qX/view]*
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### 🎥 Demo Video
+**Link:** [](#) *(link placeholder)*
