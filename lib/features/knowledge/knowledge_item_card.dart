@@ -5,73 +5,82 @@ import './knowledge_item.dart';
 
 class KnowledgeItemCard extends StatelessWidget {
   final KnowledgeItem item;
-  // THÊM MỚI:
+  final VoidCallback onTap; // <-- THÊM MỚI
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   
   const KnowledgeItemCard({
     super.key, 
     required this.item,
+    required this.onTap, // <-- THÊM MỚI
     required this.onEdit,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    // SỬA: Bọc trong Material/InkWell để có thể nhấp
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8.0),
+      child: InkWell(
+        onTap: onTap, // <-- SỬA: Gắn hàm
         borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.folder_open_outlined, color: AppColors.primary),
-              const SizedBox(width: 8),
+              Row(
+                children: [
+                  const Icon(Icons.folder_open_outlined, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.textSecondary),
+                    tooltip: 'Edit',
+                  ),
+                  IconButton(
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.textSecondary),
+                    tooltip: 'Delete',
+                  ),
+                  IconButton(
+                    onPressed: onTap, // <-- SỬA: Gắn hàm
+                    icon: const Icon(Icons.arrow_forward, size: 20, color: AppColors.textSecondary),
+                    tooltip: 'View details',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               Text(
-                item.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: AppColors.textPrimary,
-                ),
+                item.description,
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
-              const Spacer(),
-              IconButton(
-                onPressed: onEdit, // <-- SỬA: Gắn hàm
-                icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.textSecondary),
-                tooltip: 'Edit',
-              ),
-              IconButton(
-                onPressed: onDelete, // <-- SỬA: Gắn hàm
-                icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.textSecondary),
-                tooltip: 'Delete',
-              ),
-              IconButton(
-                onPressed: () {}, // TODO: context.go('/knowledge/${item.id}')
-                icon: const Icon(Icons.arrow_forward, size: 20, color: AppColors.textSecondary),
-                tooltip: 'View details',
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _buildTag('0 units', Colors.green),
+                  const SizedBox(width: 8),
+                  _buildTag('0 B', Colors.purple),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            item.description,
-            style: const TextStyle(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildTag('0 units', Colors.green),
-              const SizedBox(width: 8),
-              _buildTag('0 B', Colors.purple),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

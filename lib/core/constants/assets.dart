@@ -20,4 +20,11 @@ class Assets {
   static const String email = '$_icons/email.svg';
   static const String help = '$_icons/help.svg';
   static const String star = '$_icons/star.svg';
+
+  // Icons cho Knowledge Unit Sources
+  static const String file = '$_icons/file.png';
+  static const String website = '$_icons/website.png';
+  static const String googleDrive = '$_icons/google_drive.png';
+  static const String slack = '$_icons/slack.png';
+  static const String confluence = '$_icons/confluence.png';
 }
