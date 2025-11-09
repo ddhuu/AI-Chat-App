@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '/core/constants/assets.dart';
 import '/core/constants/colors.dart';
-import './knowledge_item.dart'; // Đã sửa đường dẫn import
-import './create_knowledge_dialog.dart'; // Đã sửa đường dẫn import
-import './knowledge_item_card.dart'; // Đã sửa đường dẫn import
-import './delete_confirmation_dialog.dart'; // Đã sửa đường dẫn import
+import '../../shared/widgets/AppDrawer.dart';
+import './knowledge_item.dart'; 
+import './create_knowledge_dialog.dart'; 
+import './knowledge_item_card.dart'; 
+import './delete_confirmation_dialog.dart';     
 import './add_knowledge_unit_dialog.dart';
 
 class KnowledgeListScreen extends StatefulWidget {
@@ -145,121 +146,131 @@ class _KnowledgeListScreenState extends State<KnowledgeListScreen> {
     );
   }
 
-  // --- BUILD UI (Giữ nguyên) ---
+
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 768;
 
-    if (isMobile) {
-      return IndexedStack(
-        index: _selectedItem == null ? 0 : 1,
-        children: [
-          _buildMasterPanel(context, isMobile), // Index 0
-          if (_selectedItem != null) 
-            _buildDetailPanel( // Index 1
-              context, 
-              _selectedItem!, 
-              isMobile,
-              onClose: () => setState(() { _selectedItem = null; }),
-            ),
-        ],
-      );
-    } else {
-      return Row(
-        children: [
-          Flexible(
-            flex: 1,
-            child: _buildMasterPanel(context, isMobile),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
-          if (_selectedItem != null) ...[
-            const VerticalDivider(width: 1, color: AppColors.border),
-            Flexible(
-              flex: 1,
-              child: _buildDetailPanel(
-                context, 
-                _selectedItem!, 
-                isMobile,
-                onClose: () => setState(() { _selectedItem = null; }),
-              ),
-            ),
-          ]
+        ),
+        title: const Text(
+          'Knowledge Management',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: AppColors.textSecondary),
+            onPressed: () {
+              // Focus on search field
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.filter_list, color: AppColors.textSecondary),
+            onPressed: () {
+              // TODO: Show filter options
+            },
+          ),
         ],
-      );
-    }
+      ),
+      drawer: const SafeArea(child: AppDrawer()),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showCreateDialog,
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+      body: isMobile
+          ? IndexedStack(
+              index: _selectedItem == null ? 0 : 1,
+              children: [
+                _buildMasterPanel(context, isMobile), // Index 0
+                if (_selectedItem != null)
+                  _buildDetailPanel(
+                    // Index 1
+                    context,
+                    _selectedItem!,
+                    isMobile,
+                    onClose: () => setState(() {
+                      _selectedItem = null;
+                    }),
+                  ),
+              ],
+            )
+          : Row(
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: _buildMasterPanel(context, isMobile),
+                ),
+                if (_selectedItem != null) ...[
+                  const VerticalDivider(width: 1, color: AppColors.border),
+                  Flexible(
+                    flex: 1,
+                    child: _buildDetailPanel(
+                      context,
+                      _selectedItem!,
+                      isMobile,
+                      onClose: () => setState(() {
+                        _selectedItem = null;
+                      }),
+                    ),
+                  ),
+                ]
+              ],
+            ),
+    );
   }
 
-  // HÀM BUILD MASTER (Giữ nguyên)
+  // HÀM BUILD MASTER
   Widget _buildMasterPanel(BuildContext context, bool isMobile) {
-    // (Hàm này giữ nguyên)
-    final searchBar = TextField(
-      controller: _searchController,
-      decoration: InputDecoration(
-        hintText: 'Search knowledge base...',
-        prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
-        suffixIcon: _searchController.text.isNotEmpty
-            ? IconButton(
-                icon: const Icon(Icons.close, color: AppColors.textSecondary),
-                onPressed: () => _searchController.clear(),
-              )
-            : null,
-        filled: true,
-        fillColor: AppColors.sidebarBackground,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
+    final searchBar = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.divider.withOpacity(0.5)),
       ),
-    );
-
-    final createButton = ElevatedButton.icon(
-      onPressed: _showCreateDialog,
-      icon: const Icon(Icons.add, size: 20),
-      label: const Text('Create Knowledge'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search knowledge base...',
+          hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
+          prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close, color: AppColors.textSecondary, size: 20),
+                  onPressed: () => _searchController.clear(),
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
-        minimumSize: isMobile ? const Size(double.infinity, 56) : null,
       ),
     );
 
     return Container(
+      color: Colors.white,
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 16 : 48,
-        vertical: 24,
+        horizontal: isMobile ? 20 : 32,
+        vertical: 20,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!isMobile) ...[
-            Text(
-              'Knowledge Base',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-          if (isMobile) ...[
-            createButton,
-            const SizedBox(height: 16),
-            searchBar,
-          ] else ...[
-            Row(
-              children: [
-                Expanded(child: searchBar),
-                const SizedBox(width: 16),
-                createButton,
-              ],
-            ),
-          ],
-          const SizedBox(height: 32),
+          searchBar,
+          const SizedBox(height: 20),
           Expanded(
             child: _filteredItems.isEmpty
                 ? _buildEmptyStateMaster()
@@ -270,10 +281,9 @@ class _KnowledgeListScreenState extends State<KnowledgeListScreen> {
     );
   }
 
-  // --- SỬA LỖI TRÀN MÀN HÌNH TẠI ĐÂY ---
-  // HÀM BUILD CHO CỘT DETAIL (CHI TIẾT UNIT)
+
   Widget _buildDetailPanel(BuildContext context, KnowledgeItem item, bool isMobile, {VoidCallback? onClose}) {
-    final List<dynamic> _units = []; // Tạm thời trống
+    final List<dynamic> _units = []; 
 
     void _showAddUnitDialog() {
       showDialog(
@@ -385,7 +395,6 @@ class _KnowledgeListScreenState extends State<KnowledgeListScreen> {
     );
   }
 
-  // (Hàm này giữ nguyên)
   Widget _buildEmptyStateMaster() {
     if (_searchController.text.isNotEmpty) {
       return Center(
@@ -417,7 +426,7 @@ class _KnowledgeListScreenState extends State<KnowledgeListScreen> {
     );
   }
 
-  // (Hàm này giữ nguyên)
+
   Widget _buildEmptyStateDetail(VoidCallback onAddPressed) {
     return Center(
       child: Column(
@@ -436,7 +445,7 @@ class _KnowledgeListScreenState extends State<KnowledgeListScreen> {
     );
   }
 
-  // (Hàm này giữ nguyên)
+
   Widget _buildKnowledgeList() {
     return ListView.builder(
       itemCount: _filteredItems.length,

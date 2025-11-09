@@ -11,6 +11,7 @@ import 'widgets/message_bubble.dart';
 import 'widgets/conversation.dart';
 import 'widgets/chat_history.dart';
 import 'widgets/upload.dart';
+import '../prompt/pages/prompt_library_bottom_sheet.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -136,6 +137,15 @@ class _ChatPageState extends State<ChatPage> {
         },
       ),
       barrierColor: Colors.black.withOpacity(0.2),
+    );
+  }
+
+  void _showPromptLibrary() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const PromptLibraryBottomSheet(),
     );
   }
 
@@ -269,6 +279,11 @@ class _ChatPageState extends State<ChatPage> {
             ),
             Row(
               children: [
+                IconButton(
+                  onPressed: _showPromptLibrary,
+                  icon: const Icon(Icons.lightbulb_outline, color: Colors.amber),
+                  tooltip: 'Prompt Library',
+                ),
                 IconButton(
                   onPressed: _showHistoryBottomSheet,
                   icon: const Icon(Icons.history, color: Colors.blueGrey),

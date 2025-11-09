@@ -17,4 +17,4 @@
 *[https://drive.google.com/file/d/146XdVLBF0ttgex6uvje3wiPmPMl5r3qX/view]*
 
 ### 🎥 Demo Video
-**Link:** [](#) *(link placeholder)*
+**Link:** [https://www.youtube.com/watch?v=dESdC7M2aV4]

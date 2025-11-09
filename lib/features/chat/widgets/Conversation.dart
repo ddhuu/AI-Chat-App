@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Prompt.dart';
+import 'prompt.dart';
 
 class Conversation extends StatelessWidget {
   final VoidCallback? onPromptTap;
