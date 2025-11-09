@@ -5,6 +5,7 @@ import '../../core/constants/strings.dart';
 import '../../features/bot/pages/bot_list_page.dart';
 import '../../features/chat/ChatPage.dart';
 import '../../features/auth/pages/auth_page.dart';
+import '../../features/ai_action/pages/ai_action_page.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -111,7 +112,13 @@ class AppDrawer extends StatelessWidget {
           _DrawerMenuItem(
             icon: Icons.explore_outlined,
             title: AppStrings.aiAction,
-            onTap: () {},
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AIActionPage()),
+              );
+            },
           ),
 
           const Divider(height: 1, color: AppColors.divider),
