@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
+import '../../pricing/pricing_page.dart';
 import '../models/bot_model.dart';
 import '../../chat/widgets/MessageBubble.dart';
 import '../../chat/widgets/AiModelSelector.dart';
 import '../../chat/widgets/ChatInput.dart';
 import '../../chat/widgets/Upload.dart';
-import '../../pricing/pages/pricing_page.dart';
 
 class ChatWithBotPage extends StatefulWidget {
   final BotModel bot;
@@ -24,6 +24,9 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
   String _selectedModel = 'GPT-4o mini';
   final List<Map<String, dynamic>> _messages = [];
 
+  // === MỚI: Biến trạng thái để lưu trữ hình ảnh đã chọn ===
+  String? _attachedImagePath;
+
   @override
   void initState() {
     super.initState();
@@ -34,10 +37,33 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
     });
   }
 
+  // === MỚI: Hàm xử lý xóa hình ảnh ===
+  void _handleImageRemove() {
+    setState(() {
+      _attachedImagePath = null;
+    });
+  }
+
+  // === MỚI: Hàm xử lý đính kèm hình ảnh ===
+  void _handleImageAttached(String sourcePath) {
+    setState(() {
+      _attachedImagePath = sourcePath;
+    });
+  }
+
   void _handleSendMessage() {
     setState(() {
       _isEmpty = false;
-      
+
+      // MOCK: Giả lập gửi tin nhắn và hình ảnh (nếu có)
+      if (_attachedImagePath != null) {
+        _messages.add({
+          'isUser': true,
+          'message': 'Image attached from $_attachedImagePath. Sending to bot...',
+        });
+      }
+      _attachedImagePath = null; // Xóa hình ảnh sau khi gửi
+
       // Mock bot response
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
@@ -60,42 +86,45 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
         'isUser': false,
         'message': 'Hi! I\'m ${widget.bot.name}. How can I help you today?',
       });
+      // MỚI: Reset hình ảnh đính kèm
+      _attachedImagePath = null;
     });
   }
+
+  // === LOGIC MỚI: Handlers cho Upload ===
+  Future<void> _handleGalleryUpload() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    _handleImageAttached('Gallery');
+  }
+
+  Future<void> _handleCameraCapture() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    _handleImageAttached('Camera');
+  }
+
+  Future<void> _handlePasteScreenshot() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    _handleImageAttached('Screenshot');
+  }
+  // ======================================
 
   void _showUploadBottomSheet() {
     showModalBottomSheet(
       context: context,
       builder: (context) => UploadOptionsSheet(
+        // SỬA LỖI: Thêm async và await để khớp với Future<void> Function()
+        // và gọi hàm đính kèm thay vì chỉ hiển thị SnackBar.
         onGalleryUpload: () async {
-          // Mock gallery upload
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Tính năng upload từ gallery đang phát triển'),
-              ),
-            );
-          }
+          Navigator.pop(context); // Đóng sheet trước
+          await _handleGalleryUpload();
         },
         onCameraCapture: () async {
-          // Mock camera capture
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Tính năng chụp ảnh đang phát triển'),
-              ),
-            );
-          }
+          Navigator.pop(context); // Đóng sheet trước
+          await _handleCameraCapture();
         },
         onPasteScreenshot: () async {
-          // Mock paste screenshot
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Tính năng paste screenshot đang phát triển'),
-              ),
-            );
-          }
+          Navigator.pop(context); // Đóng sheet trước
+          await _handlePasteScreenshot();
         },
       ),
       barrierColor: Colors.black.withOpacity(0.2),
@@ -115,7 +144,7 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
             _isEmpty
                 ? _buildEmptyState()
                 : Expanded(child: _buildConversation()),
-            
+
             // Chat Box (same as ChatPage)
             _buildChatBox(),
           ],
@@ -125,6 +154,7 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    // ... (Giữ nguyên logic AppBar)
     return AppBar(
       title: Row(
         mainAxisSize: MainAxisSize.min,
@@ -194,6 +224,7 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
   }
 
   Widget _buildEmptyState() {
+    // ... (Giữ nguyên logic EmptyState)
     return Expanded(
       child: Center(
         child: Column(
@@ -298,6 +329,10 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
         ChatInputBox(
           onSend: _handleSendMessage,
           onUpload: _showUploadBottomSheet,
+          // === SỬA LỖI: BỔ SUNG CÁC THAM SỐ BẮT BUỘC ===
+          attachedImagePath: _attachedImagePath,
+          onRemoveImage: _handleImageRemove,
+          // ==============================================
         ),
       ],
     );
