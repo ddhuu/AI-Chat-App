@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/strings.dart';
 import '../../features/bot/pages/bot_list_page.dart';
-import '../../features/chat/ChatPage.dart';
+import '../../features/chat/chat_page.dart';
 import '../../features/auth/pages/auth_page.dart';
 import '../../features/ai_action/pages/ai_action_page.dart';
 

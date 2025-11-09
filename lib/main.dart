@@ -1,7 +1,7 @@
 import 'package:ai_chat_assistant/shared/widgets/ad_manager.dart';
 import 'package:flutter/material.dart';
 import 'core/theme/AppTheme.dart';
-import 'features/chat/ChatPage.dart';
+import 'features/chat/chat_page.dart';
 
 void main() {
   runApp(const MyApp());
