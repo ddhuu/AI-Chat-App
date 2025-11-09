@@ -103,7 +103,7 @@ class AppDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const KnowledgeListScreen(),
+                  builder: (context) =>const Scaffold(body: KnowledgeListScreen() ) ,
                 ),
               );
             },
