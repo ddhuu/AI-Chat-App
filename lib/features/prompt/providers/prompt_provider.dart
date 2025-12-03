@@ -9,22 +9,41 @@ class PromptProvider with ChangeNotifier {
 
   List<PrivatePrompt> _privatePrompts = [];
   List<PublicPrompt> _publicPrompts = [];
-  bool _isLoading = false;
+  bool _isPrivateLoading = false;
+  bool _isPublicLoading = false;
+
+  bool _publicHasNext = true;
+  bool _privateHasNext = true;
   String? _errorMessage;
 
   List<PrivatePrompt> get privatePrompts => _privatePrompts;
   List<PublicPrompt> get publicPrompts => _publicPrompts;
-  bool get isLoading => _isLoading;
+
+  bool get publicHasNext => _publicHasNext;
+  bool get privateHasNext => _privateHasNext;
+  bool get isLoading => _isPrivateLoading || _isPublicLoading;
   String? get errorMessage => _errorMessage;
 
   /// Load private prompts
-  Future<void> loadPrivatePrompts({String? category, bool? isFavorite}) async {
-    _isLoading = true;
+  Future<void> loadPrivatePrompts({
+    String? category,
+    bool? isFavorite,
+    int offset = 0,
+    int limit = 20,
+    bool isLoadMore = false
+  }) async {
+    if (!isLoadMore) {
+      _isPrivateLoading = true;
+      notifyListeners();
+    }
     _errorMessage = null;
-    notifyListeners();
 
     try {
-      final params = <String, dynamic>{'isPublic': false};
+      final params = <String, dynamic>{
+        'isPublic': false,
+        'offset': offset,
+        'limit': limit,
+      };
 
       if (category != null && category != 'All') {
         params['category'] = category;
@@ -35,50 +54,80 @@ class PromptProvider with ChangeNotifier {
       }
 
       final response = await _apiService.getPrompts(params);
-      final List<dynamic> promptsJson = response['items'] ?? [];
 
-      _privatePrompts = promptsJson
+      _privateHasNext = response['hasNext'] as bool? ?? false;
+
+      final List<dynamic> promptsJson = response['items'] ?? [];
+      final List<PrivatePrompt> newPrompts = promptsJson
           .map((json) => PrivatePrompt.fromJson(json))
           .toList();
 
-      _isLoading = false;
-      notifyListeners();
+      if (isLoadMore) {
+        _privatePrompts.addAll(newPrompts);
+      } else {
+        _privatePrompts = newPrompts;
+      }
+
     } catch (e) {
-      _isLoading = false;
       _errorMessage = 'Failed to load private prompts: $e';
+    } finally {
+      _isPrivateLoading = false;
       notifyListeners();
     }
   }
 
   /// Load public prompts
-  Future<void> loadPublicPrompts({String? category, bool? isFavorite}) async {
-    _isLoading = true;
+  Future<void> loadPublicPrompts({
+    String? category,
+    bool? isFavorite,
+    String? query,
+    int offset = 0,
+    int limit = 20,
+    bool isLoadMore = false,
+  }) async {
+    if (!isLoadMore) {
+      _isPublicLoading = true;
+      notifyListeners();
+    }
     _errorMessage = null;
-    notifyListeners();
 
     try {
-      final params = <String, dynamic>{'isPublic': true};
+      final params = <String, dynamic>{
+        'isPublic': true,
+        'offset': offset,
+        'limit': limit,
+      };
 
-      if (category != null && category != 'All') {
-        params['category'] = category;
-      }
+      if (query != null && query.isNotEmpty) params['query'] = query;
 
-      if (isFavorite != null && isFavorite) {
-        params['isFavorite'] = true;
-      }
+      if (category != null && category != 'All') params['category'] = category.toLowerCase();
+      if (isFavorite != null && isFavorite) params['isFavorite'] = true;
 
       final response = await _apiService.getPrompts(params);
+      _publicHasNext = response['hasNext'] as bool? ?? false;
+
       final List<dynamic> promptsJson = response['items'] ?? [];
 
-      _publicPrompts = promptsJson
-          .map((json) => PublicPrompt.fromJson(json))
-          .toList();
+      final List<PublicPrompt> newPrompts = [];
+      for (var json in promptsJson) {
+        try {
+          newPrompts.add(PublicPrompt.fromJson(json));
+        } catch (e) {
+          print("Error parsing specific prompt: $e");
+        }
+      }
 
-      _isLoading = false;
-      notifyListeners();
+      if (isLoadMore) {
+        _publicPrompts.addAll(newPrompts);
+      } else {
+        _publicPrompts = newPrompts;
+      }
+
     } catch (e) {
-      _isLoading = false;
       _errorMessage = 'Failed to load public prompts: $e';
+      print(_errorMessage);
+    } finally {
+      _isPublicLoading = false;
       notifyListeners();
     }
   }
@@ -107,7 +156,8 @@ class PromptProvider with ChangeNotifier {
 
   /// Update prompt
   Future<bool> updatePrompt(PromptModel prompt) async {
-    _isLoading = true;
+    _isPrivateLoading = true;
+    _isPublicLoading=true;
     notifyListeners();
 
     try {
@@ -122,11 +172,13 @@ class PromptProvider with ChangeNotifier {
         }
       }
 
-      _isLoading = false;
+      _isPrivateLoading = false;
+      _isPublicLoading=false;
       notifyListeners();
       return success;
     } catch (e) {
-      _isLoading = false;
+      _isPrivateLoading = false;
+      _isPublicLoading=false;
       _errorMessage = 'Failed to update prompt: $e';
       notifyListeners();
       return false;
@@ -135,7 +187,8 @@ class PromptProvider with ChangeNotifier {
 
   /// Delete prompt
   Future<bool> deletePrompt(PromptModel prompt) async {
-    _isLoading = true;
+    _isPrivateLoading = true;
+    _isPublicLoading=true;
     notifyListeners();
 
     try {
@@ -150,11 +203,13 @@ class PromptProvider with ChangeNotifier {
         }
       }
 
-      _isLoading = false;
+      _isPrivateLoading = false;
+      _isPublicLoading=false;
       notifyListeners();
       return success;
     } catch (e) {
-      _isLoading = false;
+      _isPrivateLoading = false;
+      _isPublicLoading=false;
       _errorMessage = 'Failed to delete prompt: $e';
       notifyListeners();
       return false;
