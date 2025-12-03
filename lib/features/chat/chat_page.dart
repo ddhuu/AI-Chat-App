@@ -1,5 +1,7 @@
+import 'package:ai_chat_assistant/shared/providers/token_usage_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/colors.dart';
 import '../../shared/widgets/AppDrawer.dart';
 import '../../shared/widgets/ad_manager.dart';
@@ -27,25 +29,27 @@ class _ChatPageState extends State<ChatPage> {
 
   String? _attachedImagePath;
 
-  int get _currentTokens => MyApp.of(context).isProUser ? 999999 : 50;
-
   @override
   void initState() {
     super.initState();
-    _mockMessages.add(const MessageBubble(
-      message: "Hello! How can I help you today?",
-      isUser: false,
-    ));
+    _mockMessages.add(
+      const MessageBubble(
+        message: "Hello! How can I help you today?",
+        isUser: false,
+      ),
+    );
   }
 
   void _handleNewChat() {
     setState(() {
       isEmpty = true;
       _mockMessages.clear();
-      _mockMessages.add(const MessageBubble(
-        message: "Hello! How can I help you today?",
-        isUser: false,
-      ));
+      _mockMessages.add(
+        const MessageBubble(
+          message: "Hello! How can I help you today?",
+          isUser: false,
+        ),
+      );
       _attachedImagePath = null;
     });
   }
@@ -54,19 +58,23 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       isEmpty = false;
       if (_attachedImagePath != null) {
-        _mockMessages.add(MessageBubble(
-          message: 'Image uploaded successfully from $_attachedImagePath. Please analyze this.',
-          isUser: true,
-        ));
-        _mockMessages.add(const MessageBubble(
-          message: 'I see the image. I am processing your request now...',
-          isUser: false,
-        ));
+        _mockMessages.add(
+          MessageBubble(
+            message:
+                'Image uploaded successfully from $_attachedImagePath. Please analyze this.',
+            isUser: true,
+          ),
+        );
+        _mockMessages.add(
+          const MessageBubble(
+            message: 'I see the image. I am processing your request now...',
+            isUser: false,
+          ),
+        );
       } else {
-        _mockMessages.add(const MessageBubble(
-          message: 'Sending text message...',
-          isUser: true,
-        ));
+        _mockMessages.add(
+          const MessageBubble(message: 'Sending text message...', isUser: true),
+        );
       }
 
       _attachedImagePath = null;
@@ -91,6 +99,7 @@ class _ChatPageState extends State<ChatPage> {
       _attachedImagePath = sourcePath;
     });
   }
+
   void _handleImageRemove() {
     setState(() {
       _attachedImagePath = null;
@@ -150,8 +159,14 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildTokenStatus() {
-    final isPro = MyApp.of(context).isProUser;
-    final tokenText = isPro ? 'Tokens: VÔ HẠN' : 'Tokens: ${_currentTokens}';
+    final tokenUsageProvider = context.watch<TokenUsageProvider>();
+    final isPro = tokenUsageProvider.currentUser.plan != 'free';
+    final remainingTokens = tokenUsageProvider.remainingTokens;
+    final totalTokens = tokenUsageProvider.totalTokens;
+
+    final tokenText = isPro
+        ? 'Tokens: VÔ HẠN'
+        : 'Tokens: $remainingTokens/$totalTokens';
     final textColor = isPro ? AppColors.primary : AppColors.textSecondary;
 
     return Padding(
@@ -159,11 +174,7 @@ class _ChatPageState extends State<ChatPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Icon(
-            Icons.local_fire_department,
-            size: 16,
-            color: Colors.blue,
-          ),
+          Icon(Icons.local_fire_department, size: 16, color: Colors.blue),
           const SizedBox(width: 4),
           Text(
             tokenText,
@@ -222,7 +233,11 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(Icons.rocket_launch, color: Colors.blue.shade700, size: 20),
+                Icon(
+                  Icons.rocket_launch,
+                  color: Colors.blue.shade700,
+                  size: 20,
+                ),
               ],
             ),
           )
@@ -257,9 +272,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildConversation() {
-    return ListView(
-      children: _mockMessages,
-    );
+    return ListView(children: _mockMessages);
   }
 
   Widget _buildChatBox() {
@@ -281,7 +294,10 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 IconButton(
                   onPressed: _showPromptLibrary,
-                  icon: const Icon(Icons.lightbulb_outline, color: Colors.amber),
+                  icon: const Icon(
+                    Icons.lightbulb_outline,
+                    color: Colors.amber,
+                  ),
                   tooltip: 'Prompt Library',
                 ),
                 IconButton(
@@ -305,7 +321,7 @@ class _ChatPageState extends State<ChatPage> {
           attachedImagePath: _attachedImagePath,
           onRemoveImage: _handleImageRemove,
         ),
-        _buildTokenStatus()
+        _buildTokenStatus(),
       ],
     );
   }

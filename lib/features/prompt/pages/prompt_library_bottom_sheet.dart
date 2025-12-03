@@ -1,7 +1,8 @@
+import 'package:ai_chat_assistant/features/prompt/providers/prompt_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/colors.dart';
 import '../models/prompt_model.dart';
-import '../data/mock_prompts.dart';
 import '../widgets/private_prompt_list.dart';
 import '../widgets/public_prompt_list.dart';
 import '../dialogs/add_prompt_dialog.dart';
@@ -10,24 +11,25 @@ class PromptLibraryBottomSheet extends StatefulWidget {
   const PromptLibraryBottomSheet({super.key});
 
   @override
-  State<PromptLibraryBottomSheet> createState() => _PromptLibraryBottomSheetState();
+  State<PromptLibraryBottomSheet> createState() =>
+      _PromptLibraryBottomSheetState();
 }
 
 class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
   // Tab selection: 0 = Private, 1 = Public
   int _selectedTab = 0;
-  
+
   // Search
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  
+
   // Favorite filter
   bool _showFavoritesOnly = false;
-  
+
   // Category filter (for public prompts)
   String _selectedCategory = PromptCategory.all;
   bool _showAllCategories = false;
-  
+
   // Data
   List<PrivatePrompt> _privatePrompts = [];
   List<PublicPrompt> _publicPrompts = [];
@@ -45,18 +47,34 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
   }
 
   void _loadPrompts() {
-    setState(() {
-      _privatePrompts = MockPrivatePrompts.getPrompts();
-      _publicPrompts = MockPublicPrompts.getPrompts();
-    });
+    final promptProvider = context.read<PromptProvider>();
+
+    // Load based on selected tab
+    if (_selectedTab == 0) {
+      promptProvider.loadPrivatePrompts(
+        category: _selectedCategory != PromptCategory.all
+            ? _selectedCategory
+            : null,
+        isFavorite: _showFavoritesOnly ? true : null,
+      );
+    } else {
+      promptProvider.loadPublicPrompts(
+        category: _selectedCategory != PromptCategory.all
+            ? _selectedCategory
+            : null,
+        isFavorite: _showFavoritesOnly ? true : null,
+      );
+    }
   }
 
-  List<PrivatePrompt> _getFilteredPrivatePrompts() {
-    return _privatePrompts.where((prompt) {
+  List<PrivatePrompt> _getFilteredPrivatePrompts(List<PrivatePrompt> prompts) {
+    return prompts.where((prompt) {
       // Search filter
       if (_searchQuery.isNotEmpty) {
         if (!prompt.name.toLowerCase().contains(_searchQuery.toLowerCase()) &&
-            !prompt.content.toLowerCase().contains(_searchQuery.toLowerCase())) {
+            !prompt.content.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            )) {
           return false;
         }
       }
@@ -68,18 +86,23 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
     }).toList();
   }
 
-  List<PublicPrompt> _getFilteredPublicPrompts() {
-    return _publicPrompts.where((prompt) {
+  List<PublicPrompt> _getFilteredPublicPrompts(List<PublicPrompt> prompts) {
+    return prompts.where((prompt) {
       // Search filter
       if (_searchQuery.isNotEmpty) {
         if (!prompt.name.toLowerCase().contains(_searchQuery.toLowerCase()) &&
-            !prompt.content.toLowerCase().contains(_searchQuery.toLowerCase()) &&
-            !prompt.description.toLowerCase().contains(_searchQuery.toLowerCase())) {
+            !prompt.content.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            ) &&
+            !prompt.description.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            )) {
           return false;
         }
       }
       // Category filter
-      if (_selectedCategory != PromptCategory.all && prompt.category != _selectedCategory) {
+      if (_selectedCategory != PromptCategory.all &&
+          prompt.category != _selectedCategory) {
         return false;
       }
       // Favorite filter
@@ -90,43 +113,44 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
     }).toList();
   }
 
-  void _handleAddPrompt(PrivatePrompt prompt) {
-    setState(() {
-      _privatePrompts.add(prompt);
-    });
+  Future<void> _handleAddPrompt(PrivatePrompt prompt) async {
+    final promptProvider = context.read<PromptProvider>();
+    await promptProvider.createPrompt(prompt);
   }
 
-  void _handleEditPrompt(PrivatePrompt updatedPrompt) {
-    setState(() {
-      final index = _privatePrompts.indexWhere((p) => p.id == updatedPrompt.id);
-      if (index != -1) {
-        _privatePrompts[index] = updatedPrompt;
-      }
-    });
+  Future<void> _handleEditPrompt(PrivatePrompt updatedPrompt) async {
+    final promptProvider = context.read<PromptProvider>();
+    await promptProvider.updatePrompt(updatedPrompt);
   }
 
-  void _handleDeletePrompt(String id) {
-    setState(() {
-      _privatePrompts.removeWhere((p) => p.id == id);
-    });
+  Future<void> _handleDeletePrompt(String id) async {
+    final promptProvider = context.read<PromptProvider>();
+    final prompt = _selectedTab == 0
+        ? promptProvider.privatePrompts.firstWhere((p) => p.id == id)
+        : promptProvider.publicPrompts.firstWhere((p) => p.id == id);
+
+    await promptProvider.deletePrompt(prompt);
   }
 
-  void _handleToggleFavorite(String id, bool isFavorite) {
-    setState(() {
-      if (_selectedTab == 0) {
-        final prompt = _privatePrompts.firstWhere((p) => p.id == id);
-        prompt.isFavorite = isFavorite;
-      } else {
-        final prompt = _publicPrompts.firstWhere((p) => p.id == id);
-        prompt.isFavorite = isFavorite;
-      }
-    });
+  Future<void> _handleToggleFavorite(String id, bool isFavorite) async {
+    final promptProvider = context.read<PromptProvider>();
+    final prompt = _selectedTab == 0
+        ? promptProvider.privatePrompts.firstWhere((p) => p.id == id)
+        : promptProvider.publicPrompts.firstWhere((p) => p.id == id);
+
+    await promptProvider.toggleFavorite(prompt);
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredPrivatePrompts = _getFilteredPrivatePrompts();
-    final filteredPublicPrompts = _getFilteredPublicPrompts();
+    final promptProvider = context.watch<PromptProvider>();
+
+    final filteredPrivatePrompts = _getFilteredPrivatePrompts(
+      promptProvider.privatePrompts,
+    );
+    final filteredPublicPrompts = _getFilteredPublicPrompts(
+      promptProvider.publicPrompts,
+    );
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
@@ -144,10 +168,7 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  AppColors.primary,
-                  AppColors.primary.withOpacity(0.8),
-                ],
+                colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -159,7 +180,10 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -202,9 +226,8 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
                       onPressed: () {
                         showDialog(
                           context: context,
-                          builder: (context) => AddPromptDialog(
-                            onAdd: _handleAddPrompt,
-                          ),
+                          builder: (context) =>
+                              AddPromptDialog(onAdd: _handleAddPrompt),
                         );
                       },
                       icon: Container(
@@ -246,13 +269,9 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
               padding: const EdgeInsets.all(4),
               child: Row(
                 children: [
-                  Expanded(
-                    child: _buildTabButton('Private', 0),
-                  ),
+                  Expanded(child: _buildTabButton('Private', 0)),
                   const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildTabButton('Public', 1),
-                  ),
+                  Expanded(child: _buildTabButton('Public', 1)),
                 ],
               ),
             ),
@@ -345,29 +364,34 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: (_showAllCategories
-                              ? PromptCategory.allCategories
-                              : PromptCategory.allCategories.sublist(0, 4))
-                          .map((category) => ChoiceChip(
-                                label: Text(category),
-                                selected: _selectedCategory == category,
-                                onSelected: (selected) {
-                                  setState(() {
-                                    _selectedCategory = category;
-                                  });
-                                },
-                                selectedColor: AppColors.primary,
-                                backgroundColor: AppColors.surface,
-                                labelStyle: TextStyle(
-                                  color: _selectedCategory == category
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
-                                  fontSize: 13,
+                      children:
+                          (_showAllCategories
+                                  ? PromptCategory.allCategories
+                                  : PromptCategory.allCategories.sublist(0, 4))
+                              .map(
+                                (category) => ChoiceChip(
+                                  label: Text(category),
+                                  selected: _selectedCategory == category,
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      _selectedCategory = category;
+                                    });
+                                  },
+                                  selectedColor: AppColors.primary,
+                                  backgroundColor: AppColors.surface,
+                                  labelStyle: TextStyle(
+                                    color: _selectedCategory == category
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                    fontSize: 13,
+                                  ),
+                                  shape: const StadiumBorder(
+                                    side: BorderSide.none,
+                                  ),
+                                  showCheckmark: false,
                                 ),
-                                shape: const StadiumBorder(side: BorderSide.none),
-                                showCheckmark: false,
-                              ))
-                          .toList(),
+                              )
+                              .toList(),
                     ),
                   ),
                   IconButton(
@@ -388,9 +412,11 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
             const SizedBox(height: 8),
           ],
 
-          // Prompt List
+          // Prompt List with Loading
           Expanded(
-            child: _selectedTab == 0
+            child: promptProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _selectedTab == 0
                 ? PrivatePromptList(
                     prompts: filteredPrivatePrompts,
                     onDelete: _handleDeletePrompt,
@@ -445,7 +471,9 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   fontSize: 14,
                 ),

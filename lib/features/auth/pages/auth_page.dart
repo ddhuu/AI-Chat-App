@@ -1,4 +1,9 @@
+import 'package:ai_chat_assistant/features/chat/chat_page.dart';
+import 'package:ai_chat_assistant/main.dart';
+import 'package:ai_chat_assistant/shared/providers/auth_provider.dart';
+import 'package:ai_chat_assistant/shared/widgets/ad_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/strings.dart';
 import '../widgets/auth_logo.dart';
@@ -107,11 +112,11 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   Future<void> _handleLogin() async {
-    final usernameError = _validateUsername(_usernameController.text);
+    final emailError = _validateEmail(_emailController.text);
     final passwordError = _validatePassword(_passwordController.text);
 
-    if (usernameError != null) {
-      _showError(usernameError);
+    if (emailError != null) {
+      _showError(emailError);
       return;
     }
     if (passwordError != null) {
@@ -121,15 +126,31 @@ class _AuthPageState extends State<AuthPage> {
 
     setState(() => _isLoading = true);
 
-    // Mock API call
-    await Future.delayed(const Duration(seconds: 2));
+    // API call
+    final authProvider = context.read<AuthProvider>();
+    final result = await authProvider.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
 
     setState(() => _isLoading = false);
 
-    if (mounted) {
+    if (!mounted) return;
+
+    if (result == "success") {
       _showSuccess(AppStrings.loginSuccess);
-      // Navigate to home
-      Navigator.of(context).pop();
+      // Navigate to ChatPage
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => AdManager(
+            isProUser: MyApp.of(context).isProUser,
+            child: const ChatPage(),
+          ),
+        ),
+        (route) => false,
+      );
+    } else {
+      _showError(result ?? "Login failed");
     }
   }
 
@@ -160,15 +181,24 @@ class _AuthPageState extends State<AuthPage> {
 
     setState(() => _isLoading = true);
 
-    // Mock API call
-    await Future.delayed(const Duration(seconds: 2));
+    // API call
+    final authProvider = context.read<AuthProvider>();
+    final result = await authProvider.register(
+      _emailController.text.trim(),
+      _passwordController.text,
+      _usernameController.text.trim(),
+    );
 
     setState(() => _isLoading = false);
 
-    if (mounted) {
+    if (!mounted) return;
+
+    if (result == "success") {
       _showSuccess(AppStrings.registerSuccess);
       // Switch to login
       _switchState(AuthState.login);
+    } else {
+      _showError(result ?? "Registration failed");
     }
   }
 
@@ -346,27 +376,25 @@ class _AuthPageState extends State<AuthPage> {
         ),
         const SizedBox(height: 24),
 
-        // Username Field
         AuthTextField(
-          controller: _usernameController,
-          focusNode: _usernameFocus,
-          nextFocusNode: isLogin ? _passwordFocus : _emailFocus,
-          label: AppStrings.username,
-          hintText: 'Nhập tên đăng nhập',
-          validator: _validateUsername,
+          controller: _emailController,
+          focusNode: _emailFocus,
+          nextFocusNode: isLogin ? _passwordFocus : _usernameFocus,
+          label: AppStrings.email,
+          hintText: 'example@email.com',
+          keyboardType: TextInputType.emailAddress,
+          validator: _validateEmail,
         ),
         const SizedBox(height: 16),
 
-        // Email Field (Register only)
         if (!isLogin) ...[
           AuthTextField(
-            controller: _emailController,
-            focusNode: _emailFocus,
+            controller: _usernameController,
+            focusNode: _usernameFocus,
             nextFocusNode: _passwordFocus,
-            label: AppStrings.email,
-            hintText: 'example@email.com',
-            keyboardType: TextInputType.emailAddress,
-            validator: _validateEmail,
+            label: AppStrings.username,
+            hintText: 'Nhập tên đăng nhập',
+            validator: _validateUsername,
           ),
           const SizedBox(height: 16),
         ],
