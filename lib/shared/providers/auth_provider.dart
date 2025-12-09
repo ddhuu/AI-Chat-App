@@ -28,11 +28,34 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final response = await _apiService.dio.post(
-        ApiConstants.register,
-        data: {"email": email, "password": password, "username": username},
+        '${ApiConstants.authBaseUrl}${ApiConstants.register}',
+        data: {
+          "email": email,
+          "password": password,
+          "verification_callback_url":
+              "https://auth.jarvis.cx/handler/email-verification?after_auth_return_to=%2Fauth%2Fsignin%3Fclient_id%3Djarvis_chat%26redirect%3Dhttps%253A%252F%252Fchat.jarvis.cx%252Fauth%252Foauth%252Fsuccess",
+        },
+        options: Options(
+          headers: {
+            'X-Stack-Access-Type': ApiConstants.stackAccessType,
+            'X-Stack-Project-Id': ApiConstants.stackProjectId,
+            'X-Stack-Publishable-Client-Key':
+                ApiConstants.stackPublishableClientKey,
+          },
+        ),
       );
 
-      if (response.statusCode == 201) {
+      // Stack Auth returns 200 for successful registration
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Stack Auth returns access_token and refresh_token directly
+        final accessToken = response.data['access_token'];
+        final refreshToken = response.data['refresh_token'];
+
+        if (accessToken != null && refreshToken != null) {
+          // Save tokens
+          await _apiService.saveTokens(accessToken, refreshToken);
+        }
+
         _isLoading = false;
         notifyListeners();
         return "success";
@@ -44,11 +67,20 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       if (e is DioException && e.response != null) {
-        _errorMessage = e.response?.data["details"][0]["issue"];
+        // Handle Stack Auth error format
+        final errorData = e.response?.data;
+        if (errorData != null && errorData is Map) {
+          _errorMessage =
+              errorData['error']?.toString() ??
+              errorData['message']?.toString() ??
+              "Registration failed";
+        } else {
+          _errorMessage = "Registration failed";
+        }
         notifyListeners();
         return _errorMessage;
       }
-      _errorMessage = "Network error. Please check your connection.";
+      _errorMessage = e.toString();
       notifyListeners();
       return _errorMessage;
     }
@@ -62,13 +94,22 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final response = await _apiService.dio.post(
-        ApiConstants.login,
+        '${ApiConstants.authBaseUrl}${ApiConstants.login}',
         data: {"email": email, "password": password},
+        options: Options(
+          headers: {
+            'X-Stack-Access-Type': ApiConstants.stackAccessType,
+            'X-Stack-Project-Id': ApiConstants.stackProjectId,
+            'X-Stack-Publishable-Client-Key':
+                ApiConstants.stackPublishableClientKey,
+          },
+        ),
       );
 
       if (response.statusCode == 200) {
-        final accessToken = response.data['token']['accessToken'];
-        final refreshToken = response.data['token']['refreshToken'];
+        // Stack Auth returns access_token and refresh_token directly
+        final accessToken = response.data['access_token'];
+        final refreshToken = response.data['refresh_token'];
 
         // Save tokens
         await _apiService.saveTokens(accessToken, refreshToken);
@@ -91,11 +132,20 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       if (e is DioException && e.response != null) {
-        _errorMessage = e.response?.data["details"][0]["issue"];
+        // Handle Stack Auth error format
+        final errorData = e.response?.data;
+        if (errorData != null && errorData is Map) {
+          _errorMessage =
+              errorData['error']?.toString() ??
+              errorData['message']?.toString() ??
+              "Login failed";
+        } else {
+          _errorMessage = "Login failed";
+        }
         notifyListeners();
         return _errorMessage;
       }
-      _errorMessage = "Network error. Please check your connection.";
+      _errorMessage = e.toString();
       notifyListeners();
       return _errorMessage;
     }
@@ -110,9 +160,21 @@ class AuthProvider with ChangeNotifier {
     _tokenUsageProvider.setIsAuthenticated(false);
 
     try {
-      final response = await _apiService.dio.get(
-        ApiConstants.logout,
-        options: Options(extra: {'requireToken': true}),
+      // Get refresh token for logout
+      final refreshToken = _apiService.refreshToken;
+
+      final response = await _apiService.dio.delete(
+        '${ApiConstants.authBaseUrl}${ApiConstants.logout}',
+        options: Options(
+          headers: {
+            'X-Stack-Access-Type': ApiConstants.stackAccessType,
+            'X-Stack-Project-Id': ApiConstants.stackProjectId,
+            'X-Stack-Publishable-Client-Key':
+                ApiConstants.stackPublishableClientKey,
+            if (refreshToken != null) 'X-Stack-Refresh-Token': refreshToken,
+          },
+          extra: {'requireToken': true},
+        ),
       );
 
       if (response.statusCode == 200) {

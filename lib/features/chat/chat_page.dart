@@ -1,3 +1,5 @@
+import 'package:ai_chat_assistant/data/services/api_service.dart';
+import 'package:ai_chat_assistant/features/chat/services/chat_service.dart';
 import 'package:ai_chat_assistant/shared/providers/token_usage_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,12 +10,12 @@ import '../../shared/widgets/ad_manager.dart';
 import '../pricing/pricing_page.dart';
 import '../../main.dart';
 import 'widgets/ai_model_selector.dart';
-import 'widgets/chat_input.dart';
 import 'widgets/message_bubble.dart';
 import 'widgets/conversation.dart';
 import 'widgets/chat_history.dart';
 import 'widgets/upload.dart';
 import '../prompt/pages/prompt_library_bottom_sheet.dart';
+import '../prompt/widgets/prompt_suggestion_overlay.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -27,17 +29,87 @@ class _ChatPageState extends State<ChatPage> {
   String selectedModel = 'GPT-4o mini';
   final List<Widget> _mockMessages = [];
 
+  // Chat state
+  late ChatService _chatService;
+  String? _conversationId;
+  final List<Map<String, dynamic>> _conversationHistory = [];
+  bool _isSending = false;
+
+  // Slash command overlay
+  OverlayEntry? _promptOverlayEntry;
+  final TextEditingController _chatInputController = TextEditingController();
+  final GlobalKey _textFieldKey = GlobalKey();
+
   String? _attachedImagePath;
 
   @override
   void initState() {
     super.initState();
+    // Initialize ChatService
+    final apiService = context.read<ApiService>();
+    _chatService = ChatService(apiService);
+
     _mockMessages.add(
       const MessageBubble(
         message: "Hello! How can I help you today?",
         isUser: false,
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _chatInputController.dispose();
+    _closePromptOverlay();
+    super.dispose();
+  }
+
+  void _closePromptOverlay() {
+    _promptOverlayEntry?.remove();
+    _promptOverlayEntry = null;
+  }
+
+  void _handleTextChanged(String text) {
+    // Detect slash command
+    if (text.endsWith('/')) {
+      _showPromptOverlay();
+    } else if (_promptOverlayEntry != null && !text.endsWith('/')) {
+      _closePromptOverlay();
+    }
+  }
+
+  void _showPromptOverlay() {
+    try {
+      // Close existing overlay if any
+      _closePromptOverlay();
+
+
+      // Get TextField context from GlobalKey
+      final textFieldContext = _textFieldKey.currentContext;
+      if (textFieldContext == null) {
+        return;
+      }
+
+      // Create and show new overlay
+      final overlayHelper = PromptSuggestionOverlayHelper(
+        context: textFieldContext,
+        onClose: _closePromptOverlay,
+        onUsePrompt: (String? promptText) {
+          if (promptText != null && promptText.isNotEmpty) {
+            // Remove the trailing '/' and send the prompt
+            final currentText = _chatInputController.text;
+            if (currentText.endsWith('/')) {
+              _chatInputController.clear();
+            }
+            _handleSendMessage(promptText);
+          }
+        },
+      );
+
+      _promptOverlayEntry = overlayHelper.createOverlayEntry();
+      Overlay.of(context).insert(_promptOverlayEntry!);
+    } catch (e) {
+    }
   }
 
   void _handleNewChat() {
@@ -50,45 +122,217 @@ class _ChatPageState extends State<ChatPage> {
           isUser: false,
         ),
       );
-      _attachedImagePath = null;
+
+      // Reset conversation state for new thread
+      _conversationId = null;
+      _conversationHistory.clear();
+
+      print('🆕 Starting new chat thread');
     });
   }
 
-  void _handleOpenConversation() {
+  Future<void> _handleSendMessage(String userMessage) async {
+    if (_isSending || userMessage.trim().isEmpty) return;
+
+    print(
+      'Sending message: ${userMessage.substring(0, userMessage.length > 50 ? 50 : userMessage.length)}...',
+    );
+
     setState(() {
+      _isSending = true;
       isEmpty = false;
-      if (_attachedImagePath != null) {
-        _mockMessages.add(
-          MessageBubble(
-            message:
-                'Image uploaded successfully from $_attachedImagePath. Please analyze this.',
-            isUser: true,
-          ),
+
+      // Clear initial welcome message on first user message
+      if (_conversationHistory.isEmpty) {
+        _mockMessages.clear();
+      }
+
+      // Add user message to UI
+      _mockMessages.add(MessageBubble(message: userMessage, isUser: true));
+    });
+
+    try {
+      Map<String, dynamic> response;
+
+      // First message - create new thread
+      if (_conversationHistory.isEmpty) {
+        response = await _chatService.createNewThread(
+          message: userMessage,
+          modelDisplayName: selectedModel,
         );
-        _mockMessages.add(
-          const MessageBubble(
-            message: 'I see the image. I am processing your request now...',
-            isUser: false,
-          ),
-        );
+
+        // Save conversation ID
+        if (response['conversationId'] != null) {
+          _conversationId = response['conversationId'];
+          print('New conversation created with ID: $_conversationId');
+        } else {
+          print('No conversationId in response: ${response.keys}');
+          print('Response data: ${response.toString()}');
+          print('Conversation will be created after next message');
+        }
       } else {
-        _mockMessages.add(
-          const MessageBubble(message: 'Sending text message...', isUser: true),
+        // Subsequent messages - send with conversationId only (messages array stays empty)
+        print('Sending message to conversation: $_conversationId');
+        response = await _chatService.sendMessage(
+          message: userMessage,
+          modelDisplayName: selectedModel,
+          conversationHistory:
+              [], // Always empty - server tracks history by conversationId
+          conversationId:
+              _conversationId, // IMPORTANT: Pass conversationId to persist messages
+        );
+
+        // Check if conversationId is returned in subsequent messages
+        if (_conversationId == null && response['conversationId'] != null) {
+          _conversationId = response['conversationId'];
+          print('Conversation ID received on message 2: $_conversationId');
+        } else {
+          print('Message sent to conversation: $_conversationId');
+        }
+      }
+
+      // Get AI response
+      final aiResponse = response['message'] ?? 'No response';
+
+      // Add user message to history AFTER getting response
+      _conversationHistory.add({
+        "role": "user",
+        "content": userMessage,
+        "files": [],
+      });
+
+      // Add AI response to history
+      _conversationHistory.add({"role": "model", "content": aiResponse});
+
+      // Add AI response to UI
+      setState(() {
+        _mockMessages.add(MessageBubble(message: aiResponse, isUser: false));
+      });
+
+      // Update token usage
+      if (response['remainingUsage'] != null && mounted) {
+        try {
+          final tokenProvider = context.read<TokenUsageProvider>();
+          await tokenProvider.getUsage();
+        } catch (e) {
+          print('Failed to update token usage: $e');
+        }
+      }
+
+      // Show ad (wrapped in try-catch to prevent crashes)
+      if (mounted) {
+        try {
+          AdManager.of(context)?.showInterstitialAd();
+        } catch (e) {
+          print('Failed to show ad: $e');
+        }
+      }
+    } catch (e, stackTrace) {
+      print('Error sending message: $e');
+      print('Stack trace: $stackTrace');
+
+      // Show error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send message: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
 
-      _attachedImagePath = null;
-    });
-    AdManager.of(context)?.showInterstitialAd();
+      // Remove user message on error
+      if (mounted) {
+        setState(() {
+          if (_mockMessages.isNotEmpty) {
+            _mockMessages.removeLast();
+          }
+        });
+      }
+    } finally {
+      setState(() {
+        _isSending = false;
+      });
+    }
+  }
+
+  void _handleOpenConversation() {
+    // This will be called by ChatInputBox
+    // Actual sending is handled by _handleSendMessage
   }
 
   void _showHistoryBottomSheet() {
     showModalBottomSheet(
       context: context,
-      builder: (context) =>
-          ChatHistory(onHistoryTap: (id) => _handleOpenConversation()),
+      isScrollControlled: true,
+      builder: (context) => ChatHistory(
+        onHistoryTap: (conversationId, title) =>
+            _loadConversationHistory(conversationId, title),
+      ),
       barrierColor: Colors.black.withOpacity(0.2),
     );
+  }
+
+  Future<void> _loadConversationHistory(
+    String conversationId,
+    String title,
+  ) async {
+    setState(() {
+      _isSending = true;
+      isEmpty = false;
+      _mockMessages.clear();
+      _conversationHistory.clear();
+      _conversationId = conversationId;
+    });
+
+    try {
+      final messages = await _chatService.getConversationHistory(
+        conversationId,
+        assistantModel: 'dify',
+      );
+
+      print('Loaded ${messages.length} messages from conversation');
+
+      setState(() {
+        for (var msg in messages) {
+          // API returns: { query: "user message", answer: "AI response" }
+          final userQuery = msg['query'] as String?;
+          final aiAnswer = msg['answer'] as String?;
+
+          print('Query: $userQuery');
+          print('Answer: $aiAnswer');
+
+          // Add user message
+          if (userQuery != null && userQuery.isNotEmpty) {
+            _mockMessages.add(MessageBubble(message: userQuery, isUser: true));
+
+            _conversationHistory.add({
+              "role": "user",
+              "content": userQuery,
+              "files": [],
+            });
+          }
+
+          // Add AI response
+          if (aiAnswer != null && aiAnswer.isNotEmpty) {
+            _mockMessages.add(MessageBubble(message: aiAnswer, isUser: false));
+
+            _conversationHistory.add({"role": "model", "content": aiAnswer});
+          }
+        }
+        _isSending = false;
+      });
+    } catch (e) {
+      setState(() => _isSending = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load conversation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _handleImageAttached(String sourcePath) {
@@ -149,13 +393,25 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  void _showPromptLibrary() {
-    showModalBottomSheet(
+  void _showPromptLibrary() async {
+    final String? promptText = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const PromptLibraryBottomSheet(),
     );
+
+    print('Prompt library returned: ${promptText ?? "null"}');
+
+    // If user selected and filled a prompt, send it
+    if (promptText != null && promptText.isNotEmpty) {
+      print(
+        'Prompt received from library: ${promptText.substring(0, promptText.length > 50 ? 50 : promptText.length)}...',
+      );
+      await _handleSendMessage(promptText);
+    } else {
+      print('Prompt text is null or empty, not sending');
+    }
   }
 
   Widget _buildTokenStatus() {
@@ -272,7 +528,13 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildConversation() {
-    return ListView(children: _mockMessages);
+    print('Building conversation with ${_mockMessages.length} messages');
+    return ListView.builder(
+      itemCount: _mockMessages.length,
+      itemBuilder: (context, index) {
+        return _mockMessages[index];
+      },
+    );
   }
 
   Widget _buildChatBox() {
@@ -315,14 +577,74 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ],
         ),
-        ChatInputBox(
-          onSend: _handleOpenConversation,
-          onUpload: _showUploadBottomSheet,
-          attachedImagePath: _attachedImagePath,
-          onRemoveImage: _handleImageRemove,
-        ),
+        _buildChatInput(),
         _buildTokenStatus(),
       ],
+    );
+  }
+
+  Widget _buildChatInput() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          // Upload button
+          IconButton(
+            onPressed: _showUploadBottomSheet,
+            icon: const Icon(Icons.add_circle_outline),
+            color: Colors.grey.shade600,
+          ),
+
+          // Text input
+          Expanded(
+            child: TextField(
+              key: _textFieldKey,
+              controller: _chatInputController,
+              decoration: const InputDecoration(
+                hintText: 'Type a message... (use / for prompts)',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 8),
+              ),
+              maxLines: null,
+              textInputAction: TextInputAction.send,
+              enabled: !_isSending,
+              onChanged: _handleTextChanged,
+              onSubmitted: (text) {
+                if (text.trim().isNotEmpty) {
+                  _handleSendMessage(text.trim());
+                  _chatInputController.clear();
+                }
+              },
+            ),
+          ),
+
+          // Send button
+          IconButton(
+            onPressed: _isSending
+                ? null
+                : () {
+                    final text = _chatInputController.text.trim();
+                    if (text.isNotEmpty) {
+                      _handleSendMessage(text);
+                      _chatInputController.clear();
+                    }
+                  },
+            icon: _isSending
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.send),
+            color: _isSending ? Colors.grey : Colors.blue.shade700,
+          ),
+        ],
+      ),
     );
   }
 }

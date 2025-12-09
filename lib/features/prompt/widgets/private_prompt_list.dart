@@ -47,7 +47,7 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200 &&
+            _scrollController.position.maxScrollExtent - 200 &&
         !widget.isLoadingMore &&
         widget.hasMore) {
       widget.onLoadMore();
@@ -63,9 +63,15 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
           children: [
             Icon(Icons.note_add_outlined, size: 64, color: AppColors.textHint),
             const SizedBox(height: 16),
-            Text('No private prompts yet', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+            Text(
+              'No private prompts yet',
+              style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 8),
-            Text('Create your first prompt', style: TextStyle(fontSize: 14, color: AppColors.textHint)),
+            Text(
+              'Create your first prompt',
+              style: TextStyle(fontSize: 14, color: AppColors.textHint),
+            ),
           ],
         ),
       );
@@ -75,7 +81,8 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
       controller: _scrollController,
       padding: const EdgeInsets.only(top: 8, bottom: 20),
       itemCount: widget.prompts.length + (widget.hasMore ? 1 : 0),
-      separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.divider),
+      separatorBuilder: (context, index) =>
+          Divider(height: 1, color: AppColors.divider),
       itemBuilder: (context, index) {
         if (index == widget.prompts.length) {
           return const Center(
@@ -92,10 +99,19 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
 
         final prompt = widget.prompts[index];
         return ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          contentPadding: const EdgeInsets.only(
+            left: 20,
+            right: 4,
+            top: 4,
+            bottom: 4,
+          ),
           title: Text(
             prompt.name,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: AppColors.textPrimary,
+            ),
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
@@ -103,10 +119,13 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
               IconButton(
                 icon: Icon(
                   prompt.isFavorite ? Icons.star : Icons.star_border,
-                  color: prompt.isFavorite ? Colors.amber : AppColors.textSecondary,
+                  color: prompt.isFavorite
+                      ? Colors.amber
+                      : AppColors.textSecondary,
                   size: 20,
                 ),
-                onPressed: () => widget.onToggleFavorite(prompt.id, !prompt.isFavorite),
+                onPressed: () =>
+                    widget.onToggleFavorite(prompt.id, !prompt.isFavorite),
               ),
               IconButton(
                 onPressed: () {
@@ -118,7 +137,11 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
                     ),
                   );
                 },
-                icon: Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
+                icon: Icon(
+                  Icons.edit_outlined,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
               ),
               IconButton(
                 onPressed: () {
@@ -130,18 +153,35 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
                     ),
                   );
                 },
-                icon: Icon(Icons.delete_outline, color: AppColors.textSecondary, size: 20),
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
               ),
               IconButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => UsingPromptBottomSheet(prompt: prompt),
-                  );
+                onPressed: () async {
+                  final String? filledPrompt =
+                      await showModalBottomSheet<String>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) =>
+                            UsingPromptBottomSheet(prompt: prompt),
+                      );
+
+                  // Close PromptLibraryBottomSheet and return filled prompt
+                  if (filledPrompt != null && filledPrompt.isNotEmpty) {
+                    if (context.mounted) {
+                      Navigator.pop(context, filledPrompt);
+                    }
+                  }
                 },
-                icon: Icon(Icons.arrow_forward, color: AppColors.primary, size: 20),
+                icon: Icon(
+                  Icons.arrow_forward,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
               ),
             ],
           ),

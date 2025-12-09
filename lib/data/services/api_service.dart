@@ -14,6 +14,7 @@ class ApiService {
   String? _refreshToken;
 
   String? get token => _accessToken;
+  String? get refreshToken => _refreshToken;
 
   Future<void> init() async {
     await loadTokens();

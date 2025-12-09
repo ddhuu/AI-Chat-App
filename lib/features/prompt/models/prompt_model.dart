@@ -85,7 +85,8 @@ class PublicPrompt extends PromptModel {
       id: json['_id'] as String? ?? json['id'] as String,
       name: json['title'] as String? ?? json['name'] as String,
       content: json['content'] as String? ?? '',
-      category: json['category'] as String,
+      category:
+          json['category'] as String? ?? 'other', // Default to 'other' if null
       description: json['description'] as String? ?? '',
       isFavorite: json['isFavorite'] as bool? ?? false,
     );

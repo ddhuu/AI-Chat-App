@@ -104,7 +104,8 @@ class AppDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>const Scaffold(body: KnowledgeListScreen() ) ,
+                  builder: (context) =>
+                      const Scaffold(body: KnowledgeListScreen()),
                 ),
               );
             },
@@ -138,12 +139,29 @@ class AppDrawer extends StatelessWidget {
             icon: Icons.logout_outlined,
             title: AppStrings.logout,
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
+              // Save navigator and messenger before async gap
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
+              // Close drawer first
+              navigator.pop();
+
+              // Show success message
+              messenger.showSnackBar(
                 const SnackBar(
                   content: Text(AppStrings.logoutSuccess),
                   backgroundColor: AppColors.success,
+                  duration: Duration(milliseconds: 800),
                 ),
               );
+
+              // Navigate after delay
+              Future.delayed(const Duration(milliseconds: 500), () {
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const AuthPage()),
+                  (route) => false,
+                );
+              });
             },
             textColor: AppColors.error,
           ),

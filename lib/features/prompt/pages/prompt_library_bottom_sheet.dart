@@ -65,7 +65,9 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
       }
 
       await promptProvider.loadPrivatePrompts(
-        category: _selectedCategory != PromptCategory.all ? _selectedCategory : null,
+        category: _selectedCategory != PromptCategory.all
+            ? _selectedCategory
+            : null,
         isFavorite: _showFavoritesOnly ? true : null,
 
         offset: _privateOffset,
@@ -87,7 +89,9 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
       }
 
       await promptProvider.loadPublicPrompts(
-        category: _selectedCategory != PromptCategory.all ? _selectedCategory.toLowerCase() : null,
+        category: _selectedCategory != PromptCategory.all
+            ? _selectedCategory.toLowerCase()
+            : null,
         isFavorite: _showFavoritesOnly ? true : null,
         query: _searchQuery.isNotEmpty ? _searchQuery : null,
         offset: _publicOffset,
@@ -175,7 +179,9 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
   Widget build(BuildContext context) {
     final promptProvider = context.watch<PromptProvider>();
 
-    final filteredPrivatePrompts = _getFilteredPrivatePrompts(promptProvider.privatePrompts);
+    final filteredPrivatePrompts = _getFilteredPrivatePrompts(
+      promptProvider.privatePrompts,
+    );
     final publicPrompts = promptProvider.publicPrompts;
     final privatePrompts = promptProvider.privatePrompts;
 
@@ -183,7 +189,10 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +202,10 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Container(
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
               padding: const EdgeInsets.all(4),
               child: Row(
                 children: [
@@ -214,17 +226,30 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.divider.withOpacity(0.5), width: 1),
+                      border: Border.all(
+                        color: AppColors.divider.withOpacity(0.5),
+                        width: 1,
+                      ),
                     ),
                     child: TextField(
                       controller: _searchController,
                       onChanged: _onSearchChanged, // Dùng hàm debounce
                       decoration: InputDecoration(
                         hintText: 'Search prompts...',
-                        hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
-                        prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 22),
+                        hintStyle: TextStyle(
+                          color: AppColors.textHint,
+                          fontSize: 14,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: AppColors.textSecondary,
+                          size: 22,
+                        ),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -232,9 +257,16 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
                 const SizedBox(width: 12),
                 Container(
                   decoration: BoxDecoration(
-                    color: _showFavoritesOnly ? Colors.amber.withOpacity(0.1) : AppColors.surface,
+                    color: _showFavoritesOnly
+                        ? Colors.amber.withOpacity(0.1)
+                        : AppColors.surface,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _showFavoritesOnly ? Colors.amber : AppColors.divider.withOpacity(0.5), width: 1),
+                    border: Border.all(
+                      color: _showFavoritesOnly
+                          ? Colors.amber
+                          : AppColors.divider.withOpacity(0.5),
+                      width: 1,
+                    ),
                   ),
                   child: IconButton(
                     onPressed: () {
@@ -245,7 +277,9 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
                     },
                     icon: Icon(
                       _showFavoritesOnly ? Icons.star : Icons.star_border,
-                      color: _showFavoritesOnly ? Colors.amber : AppColors.textSecondary,
+                      color: _showFavoritesOnly
+                          ? Colors.amber
+                          : AppColors.textSecondary,
                       size: 22,
                     ),
                   ),
@@ -265,32 +299,47 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: (_showAllCategories
-                          ? PromptCategory.allCategories
-                          : PromptCategory.allCategories.sublist(0, 4))
-                          .map((category) => ChoiceChip(
-                        label: Text(category),
-                        selected: _selectedCategory == category,
-                        onSelected: (selected) {
-                          setState(() {
-                            _selectedCategory = category.toLowerCase();
-                            _loadData(isRefresh: true);
-                          });
-                        },
-                        selectedColor: AppColors.primary,
-                        backgroundColor: AppColors.surface,
-                        labelStyle: TextStyle(
-                            color: _selectedCategory == category ? Colors.white : AppColors.textPrimary,
-                            fontSize: 13),
-                        shape: const StadiumBorder(side: BorderSide.none),
-                        showCheckmark: false,
-                      ))
-                          .toList(),
+                      children:
+                          (_showAllCategories
+                                  ? PromptCategory.allCategories
+                                  : PromptCategory.allCategories.sublist(0, 4))
+                              .map(
+                                (category) => ChoiceChip(
+                                  label: Text(category),
+                                  selected: _selectedCategory == category,
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      _selectedCategory = category
+                                          .toLowerCase();
+                                      _loadData(isRefresh: true);
+                                    });
+                                  },
+                                  selectedColor: AppColors.primary,
+                                  backgroundColor: AppColors.surface,
+                                  labelStyle: TextStyle(
+                                    color: _selectedCategory == category
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                    fontSize: 13,
+                                  ),
+                                  shape: const StadiumBorder(
+                                    side: BorderSide.none,
+                                  ),
+                                  showCheckmark: false,
+                                ),
+                              )
+                              .toList(),
                     ),
                   ),
                   IconButton(
-                    onPressed: () => setState(() => _showAllCategories = !_showAllCategories),
-                    icon: Icon(_showAllCategories ? Icons.arrow_drop_up : Icons.arrow_drop_down),
+                    onPressed: () => setState(
+                      () => _showAllCategories = !_showAllCategories,
+                    ),
+                    icon: Icon(
+                      _showAllCategories
+                          ? Icons.arrow_drop_up
+                          : Icons.arrow_drop_down,
+                    ),
                   ),
                 ],
               ),
@@ -300,26 +349,31 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
 
           // List Data
           Expanded(
-            child: (promptProvider.isLoading && _selectedTab == 0 && _privateOffset == 0) ||
-                (promptProvider.isLoading && _selectedTab == 1 && _publicOffset == 0)
+            child:
+                (promptProvider.isLoading &&
+                        _selectedTab == 0 &&
+                        _privateOffset == 0) ||
+                    (promptProvider.isLoading &&
+                        _selectedTab == 1 &&
+                        _publicOffset == 0)
                 ? const Center(child: CircularProgressIndicator())
                 : _selectedTab == 0
                 ? PrivatePromptList(
-              prompts: privatePrompts,
-              onDelete: _handleDeletePrompt,
-              onEdit: _handleEditPrompt,
-              onToggleFavorite: _handleToggleFavorite,
-              onLoadMore: _handleLoadMorePrivate,
-              hasMore: _hasMorePrivate,
-              isLoadingMore: _isLoadingMorePrivate,
-            )
+                    prompts: privatePrompts,
+                    onDelete: _handleDeletePrompt,
+                    onEdit: _handleEditPrompt,
+                    onToggleFavorite: _handleToggleFavorite,
+                    onLoadMore: _handleLoadMorePrivate,
+                    hasMore: _hasMorePrivate,
+                    isLoadingMore: _isLoadingMorePrivate,
+                  )
                 : PublicPromptList(
-              prompts: publicPrompts,
-              onToggleFavorite: _handleToggleFavorite,
-              onLoadMore: _handleLoadMorePublic,
-              hasMore: _hasMorePublic,
-              isLoadingMore: _isLoadingMorePublic,
-            ),
+                    prompts: publicPrompts,
+                    onToggleFavorite: _handleToggleFavorite,
+                    onLoadMore: _handleLoadMorePublic,
+                    hasMore: _hasMorePublic,
+                    isLoadingMore: _isLoadingMorePublic,
+                  ),
           ),
         ],
       ),
@@ -342,9 +396,11 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
+          padding: const EdgeInsets.only(
+            left: 24,
+            right: 20,
+            top: 16,
+            bottom: 16,
           ),
           child: Row(
             children: [
@@ -354,24 +410,44 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.lightbulb_outline, color: Colors.white, size: 24),
+                child: const Icon(
+                  Icons.lightbulb_outline,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 12),
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Prompt Library', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text(
+                      'Prompt Library',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                     SizedBox(height: 2),
-                    Text('Choose or create your prompts', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                    Text(
+                      'Choose or create your prompts',
+                      style: TextStyle(fontSize: 13, color: Colors.white70),
+                    ),
                   ],
                 ),
               ),
               IconButton(
-                onPressed: () => showDialog(context: context, builder: (c) => AddPromptDialog(onAdd: _handleAddPrompt)),
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (c) => AddPromptDialog(onAdd: _handleAddPrompt),
+                ),
                 icon: Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Icon(Icons.add, color: AppColors.primary, size: 20),
                 ),
               ),
@@ -391,7 +467,9 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
     return prompts.where((prompt) {
       if (_searchQuery.isNotEmpty) {
         if (!prompt.name.toLowerCase().contains(_searchQuery.toLowerCase()) &&
-            !prompt.content.toLowerCase().contains(_searchQuery.toLowerCase())) {
+            !prompt.content.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            )) {
           return false;
         }
       }
@@ -415,15 +493,37 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))] : null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Center(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (isSelected) Icon(index == 0 ? Icons.lock_outline : Icons.public, color: AppColors.primary, size: 18),
+              if (isSelected)
+                Icon(
+                  index == 0 ? Icons.lock_outline : Icons.public,
+                  color: AppColors.primary,
+                  size: 18,
+                ),
               if (isSelected) const SizedBox(width: 6),
-              Text(label, style: TextStyle(color: isSelected ? AppColors.primary : AppColors.textSecondary, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500, fontSize: 14)),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
             ],
           ),
         ),

@@ -7,8 +7,6 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/strings.dart';
 import '../widgets/auth_logo.dart';
-import '../widgets/google_sign_in_button.dart';
-import '../widgets/divider_with_text.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/password_field.dart';
 import '../widgets/auth_button.dart';
@@ -28,12 +26,10 @@ class AuthPage extends StatefulWidget {
 class _AuthPageState extends State<AuthPage> {
   late AuthState _currentState;
 
-  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  final _usernameFocus = FocusNode();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final _confirmPasswordFocus = FocusNode();
@@ -48,11 +44,9 @@ class _AuthPageState extends State<AuthPage> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _usernameFocus.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
     _confirmPasswordFocus.dispose();
@@ -63,21 +57,10 @@ class _AuthPageState extends State<AuthPage> {
     FocusScope.of(context).unfocus();
     setState(() {
       _currentState = newState;
-      _usernameController.clear();
       _emailController.clear();
       _passwordController.clear();
       _confirmPasswordController.clear();
     });
-  }
-
-  String? _validateUsername(String? value) {
-    if (value == null || value.isEmpty) {
-      return AppStrings.usernameRequired;
-    }
-    if (value.length < 3) {
-      return AppStrings.usernameTooShort;
-    }
-    return null;
   }
 
   String? _validateEmail(String? value) {
@@ -155,17 +138,12 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   Future<void> _handleRegister() async {
-    final usernameError = _validateUsername(_usernameController.text);
     final emailError = _validateEmail(_emailController.text);
     final passwordError = _validatePassword(_passwordController.text);
     final confirmPasswordError = _validateConfirmPassword(
       _confirmPasswordController.text,
     );
 
-    if (usernameError != null) {
-      _showError(usernameError);
-      return;
-    }
     if (emailError != null) {
       _showError(emailError);
       return;
@@ -186,7 +164,7 @@ class _AuthPageState extends State<AuthPage> {
     final result = await authProvider.register(
       _emailController.text.trim(),
       _passwordController.text,
-      _usernameController.text.trim(),
+      '', // username not used by Stack Auth
     );
 
     setState(() => _isLoading = false);
@@ -224,20 +202,6 @@ class _AuthPageState extends State<AuthPage> {
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    setState(() => _isLoading = true);
-
-    // Mock Google Sign In
-    await Future.delayed(const Duration(seconds: 2));
-
-    setState(() => _isLoading = false);
-
-    if (mounted) {
-      _showSuccess(AppStrings.loginSuccess);
-      Navigator.of(context).pop();
-    }
-  }
-
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppColors.error),
@@ -265,29 +229,52 @@ class _AuthPageState extends State<AuthPage> {
           ),
         ),
         body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
             children: [
               // Logo & Title
-              const AuthLogo(),
+              const Padding(
+                padding: EdgeInsets.only(top: 20),
+                child: AuthLogo(),
+              ),
               const SizedBox(height: 32),
 
-              // Google Sign In
-              GoogleSignInButton(
-                onPressed: _isLoading ? null : _handleGoogleSignIn,
-                isLoading: _isLoading,
-              ),
-              const SizedBox(height: 24),
-
-              // Divider
-              const DividerWithText(text: AppStrings.orContinueWith),
+              // Tab Bar for Login/Register
+              if (_currentState != AuthState.forgotPassword)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildTabButton(
+                          text: AppStrings.login,
+                          isSelected: _currentState == AuthState.login,
+                          onTap: () => _switchState(AuthState.login),
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildTabButton(
+                          text: AppStrings.register,
+                          isSelected: _currentState == AuthState.register,
+                          onTap: () => _switchState(AuthState.register),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 24),
 
               // Auth Forms
-              if (_currentState == AuthState.forgotPassword)
-                _buildForgotPasswordForm()
-              else
-                _buildLoginRegisterForm(),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  children: [
+                    if (_currentState == AuthState.forgotPassword)
+                      _buildForgotPasswordForm()
+                    else
+                      _buildLoginRegisterForm(),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -354,50 +341,16 @@ class _AuthPageState extends State<AuthPage> {
 
     return Column(
       children: [
-        // Login/Register Toggle
-        Row(
-          children: [
-            Expanded(
-              child: _buildToggleButton(
-                text: AppStrings.login,
-                isSelected: isLogin,
-                onTap: () => _switchState(AuthState.login),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildToggleButton(
-                text: AppStrings.register,
-                isSelected: !isLogin,
-                onTap: () => _switchState(AuthState.register),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-
         AuthTextField(
           controller: _emailController,
           focusNode: _emailFocus,
-          nextFocusNode: isLogin ? _passwordFocus : _usernameFocus,
+          nextFocusNode: _passwordFocus,
           label: AppStrings.email,
           hintText: 'example@email.com',
           keyboardType: TextInputType.emailAddress,
           validator: _validateEmail,
         ),
         const SizedBox(height: 16),
-
-        if (!isLogin) ...[
-          AuthTextField(
-            controller: _usernameController,
-            focusNode: _usernameFocus,
-            nextFocusNode: _passwordFocus,
-            label: AppStrings.username,
-            hintText: 'Nhập tên đăng nhập',
-            validator: _validateUsername,
-          ),
-          const SizedBox(height: 16),
-        ],
 
         // Password Field
         PasswordField(
@@ -486,31 +439,43 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  Widget _buildToggleButton({
+  Widget _buildTabButton({
     required String text,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.divider,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              style: TextStyle(
+                color: isSelected
+                    ? AppColors.textPrimary
+                    : AppColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 16,
+              ),
+              child: Text(text, textAlign: TextAlign.center),
+            ),
           ),
-        ),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
+          // Animated underline indicator
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            height: 1.5,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary : Colors.transparent,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

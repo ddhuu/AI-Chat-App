@@ -5,10 +5,7 @@ import '../models/prompt_model.dart';
 class UsingPromptBottomSheet extends StatefulWidget {
   final PromptModel prompt;
 
-  const UsingPromptBottomSheet({
-    super.key,
-    required this.prompt,
-  });
+  const UsingPromptBottomSheet({super.key, required this.prompt});
 
   @override
   State<UsingPromptBottomSheet> createState() => _UsingPromptBottomSheetState();
@@ -23,7 +20,7 @@ class _UsingPromptBottomSheetState extends State<UsingPromptBottomSheet> {
   void initState() {
     super.initState();
     _keywords = widget.prompt.extractKeywords();
-    
+
     // Create controllers for each keyword
     for (var _ in _keywords) {
       _controllers.add(TextEditingController());
@@ -52,36 +49,51 @@ class _UsingPromptBottomSheetState extends State<UsingPromptBottomSheet> {
   }
 
   void _sendPrompt() {
-    final filledPrompt = _getFilledPrompt();
-    // Close all bottom sheets and return to chat
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    
-    // TODO: Send prompt to chat
-    // This will be implemented when integrating with ChatPage
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Prompt sent: ${filledPrompt.substring(0, 50)}...'),
-      ),
-    );
+    try {
+      final filledPrompt = _getFilledPrompt();
+      print(
+        'Sending filled prompt: ${filledPrompt.substring(0, filledPrompt.length > 50 ? 50 : filledPrompt.length)}...',
+      );
+      // Close this bottom sheet and return filled prompt
+      Navigator.pop(context, filledPrompt);
+    } catch (e) {
+      print('Error in _sendPrompt: $e');
+      // Still try to close the bottom sheet
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  void _addToChatInput() {
+    // Return raw prompt content to be added to chat input
+    Navigator.pop(context, widget.prompt.content);
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: _isShowPrompt ? 450 : 350,
+      height: _isShowPrompt ? 500 : 400,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 20, 20, 16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -89,21 +101,23 @@ class _UsingPromptBottomSheetState extends State<UsingPromptBottomSheet> {
                   child: Text(
                     widget.prompt.name,
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
               ],
             ),
           ),
-
-          const Divider(height: 1),
 
           // View Prompt Button or Prompt Display
           Padding(
@@ -117,10 +131,7 @@ class _UsingPromptBottomSheetState extends State<UsingPromptBottomSheet> {
                     },
                     child: const Text(
                       'View Prompt',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.primary,
-                      ),
+                      style: TextStyle(fontSize: 14, color: AppColors.primary),
                     ),
                   )
                 : Column(
@@ -139,14 +150,7 @@ class _UsingPromptBottomSheetState extends State<UsingPromptBottomSheet> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () {
-                              // TODO: Add to chat input
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Added to chat input'),
-                                ),
-                              );
-                            },
+                            onPressed: _addToChatInput,
                             child: const Text(
                               'Add to chat input',
                               style: TextStyle(
@@ -184,43 +188,83 @@ class _UsingPromptBottomSheetState extends State<UsingPromptBottomSheet> {
           // User Input Section
           if (_keywords.isNotEmpty) ...[
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: const Text(
-                'User input',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  Icon(Icons.edit_note, size: 20, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Fill in the details',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: _keywords.length,
                 itemBuilder: (context, index) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: TextField(
-                      controller: _controllers[index],
-                      decoration: InputDecoration(
-                        hintText: _keywords[index],
-                        hintStyle: TextStyle(
-                          color: AppColors.textHint,
-                          fontSize: 14,
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _keywords[index],
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _controllers[index],
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: AppColors.textPrimary,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Enter ${_keywords[index].toLowerCase()}',
+                            hintStyle: TextStyle(
+                              color: AppColors.textHint,
+                              fontSize: 14,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.surface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: AppColors.divider.withOpacity(0.5),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: AppColors.primary,
+                                width: 2,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
+                      ],
                     ),
                   );
                 },
@@ -246,10 +290,7 @@ class _UsingPromptBottomSheetState extends State<UsingPromptBottomSheet> {
                 ),
                 child: const Text(
                   'Send',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
