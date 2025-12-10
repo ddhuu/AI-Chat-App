@@ -2,7 +2,7 @@
 
 ## Team Information
 **Course:** Advanced Mobile Programming  
-**Project Milestone:** Milestone 1
+**Project Milestone:** Milestone 2
 
 ### Team Members
 - **21120460** - Nguyễn Tấn Hùng
