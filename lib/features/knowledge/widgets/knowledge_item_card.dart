@@ -1,7 +1,7 @@
 // lib/screens/knowledge/widgets/knowledge_item_card.dart
 import 'package:flutter/material.dart';
 import '/core/constants/colors.dart';
-import './knowledge_item.dart';
+import 'knowledge_item.dart';
 
 class KnowledgeItemCard extends StatelessWidget {
   final KnowledgeItem item;

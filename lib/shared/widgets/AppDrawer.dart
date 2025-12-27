@@ -1,4 +1,3 @@
-import 'package:ai_chat_assistant/features/knowledge/knowledge_list_screen.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/strings.dart';
@@ -6,6 +5,7 @@ import '../../features/bot/pages/bot_list_page.dart';
 import '../../features/chat/chat_page.dart';
 import '../../features/auth/pages/auth_page.dart';
 import '../../features/ai_action/pages/ai_action_page.dart';
+import '../../features/knowledge/pages/knowledge_list_page.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -104,8 +104,7 @@ class AppDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      const Scaffold(body: KnowledgeListScreen()),
+                  builder: (context) => const KnowledgeListPage(),
                 ),
               );
             },

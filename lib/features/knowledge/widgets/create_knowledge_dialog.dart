@@ -1,7 +1,7 @@
 // lib/screens/knowledge/widgets/create_knowledge_dialog.dart
 import 'package:flutter/material.dart';
 import '/core/constants/colors.dart';
-import './knowledge_item.dart';
+import 'knowledge_item.dart';
 
 class CreateKnowledgeDialog extends StatefulWidget {
   // THÊM MỚI:
