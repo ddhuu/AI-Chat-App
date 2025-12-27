@@ -17,6 +17,7 @@ class AiModelSelector extends StatefulWidget {
 
 class _AiModelSelectorState extends State<AiModelSelector> {
   final List<Map<String, dynamic>> aiModels = [
+    {'name': 'knowledge-base', 'token': 0, 'icon': Icons.library_books},
     {'name': 'GPT-4o mini', 'token': 1, 'icon': Icons.psychology},
     {'name': 'GPT-4o', 'token': 5, 'icon': Icons.psychology_alt},
     {'name': 'Gemini 1.5 Flash', 'token': 1, 'icon': Icons.auto_awesome},

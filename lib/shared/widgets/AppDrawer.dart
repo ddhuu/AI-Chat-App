@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/strings.dart';
-import '../../features/bot/pages/bot_list_page.dart';
+import '../../features/bot/pages/assistant_list_page.dart';
 import '../../features/chat/chat_page.dart';
-import '../../features/auth/pages/auth_page.dart';
 import '../../features/ai_action/pages/ai_action_page.dart';
 import '../../features/knowledge/pages/knowledge_list_page.dart';
 
@@ -92,7 +91,9 @@ class AppDrawer extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const BotListPage()),
+                MaterialPageRoute(
+                  builder: (context) => const AssistantListPage(),
+                ),
               );
             },
           ),
@@ -120,50 +121,6 @@ class AppDrawer extends StatelessWidget {
               );
             },
           ),
-
-          const Divider(height: 1, color: AppColors.divider),
-
-          _DrawerMenuItem(
-            icon: Icons.login_outlined,
-            title: AppStrings.signInSignUp,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AuthPage()),
-              );
-            },
-          ),
-          _DrawerMenuItem(
-            icon: Icons.logout_outlined,
-            title: AppStrings.logout,
-            onTap: () {
-              // Save navigator and messenger before async gap
-              final navigator = Navigator.of(context);
-              final messenger = ScaffoldMessenger.of(context);
-
-              // Close drawer first
-              navigator.pop();
-
-              // Show success message
-              messenger.showSnackBar(
-                const SnackBar(
-                  content: Text(AppStrings.logoutSuccess),
-                  backgroundColor: AppColors.success,
-                  duration: Duration(milliseconds: 800),
-                ),
-              );
-
-              // Navigate after delay
-              Future.delayed(const Duration(milliseconds: 500), () {
-                navigator.pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const AuthPage()),
-                  (route) => false,
-                );
-              });
-            },
-            textColor: AppColors.error,
-          ),
         ],
       ),
     );
@@ -174,23 +131,18 @@ class _DrawerMenuItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  final Color? textColor;
 
   const _DrawerMenuItem({
     required this.icon,
     required this.title,
     required this.onTap,
-    this.textColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: textColor),
-      title: Text(
-        title,
-        style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
-      ),
+      leading: Icon(icon),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
       onTap: onTap,
     );
   }

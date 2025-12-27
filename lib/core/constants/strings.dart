@@ -74,6 +74,7 @@ class AppStrings {
   static const String confirmDeleteBot = 'Bạn có chắc muốn xóa bot này?';
   static const String noBots = 'Chưa có bot nào';
   static const String createFirstBot = 'Tạo bot đầu tiên của bạn';
+  static const String createBot = 'Tạo Bot';
   static const String published = 'Đã công khai';
   static const String draft = 'Nháp';
 
@@ -85,7 +86,7 @@ class AppStrings {
   static const String noKnowledge = 'Chưa có tri thức';
   static const String addKnowledgeToBot = 'Thêm tri thức cho bot';
   static const String unpublish = 'Riêng tư';
-  
+
   // Authentication
   static const String login = 'Đăng nhập';
   static const String register = 'Đăng ký';
@@ -104,23 +105,26 @@ class AppStrings {
   static const String sendResetLink = 'Gửi link đặt lại';
   static const String backToLogin = 'Quay lại đăng nhập';
   static const String createAccount = 'Tạo tài khoản';
-  
+
   // Validation
   static const String usernameRequired = 'Vui lòng nhập tên đăng nhập';
-  static const String usernameTooShort = 'Tên đăng nhập phải có ít nhất 3 ký tự';
+  static const String usernameTooShort =
+      'Tên đăng nhập phải có ít nhất 3 ký tự';
   static const String emailRequired = 'Vui lòng nhập email';
   static const String emailInvalid = 'Email không hợp lệ';
   static const String passwordRequired = 'Vui lòng nhập mật khẩu';
   static const String passwordTooShort = 'Mật khẩu phải có ít nhất 6 ký tự';
   static const String passwordNotMatch = 'Mật khẩu không khớp';
   static const String confirmPasswordRequired = 'Vui lòng xác nhận mật khẩu';
-  
+
   // Success Messages
   static const String loginSuccess = 'Đăng nhập thành công';
-  static const String registerSuccess = 'Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.';
-  static const String resetLinkSent = 'Link đặt lại mật khẩu đã được gửi đến email của bạn';
+  static const String registerSuccess =
+      'Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.';
+  static const String resetLinkSent =
+      'Link đặt lại mật khẩu đã được gửi đến email của bạn';
   static const String logoutSuccess = 'Đăng xuất thành công';
-  
+
   // Privacy
   static const String privacyPolicy = 'Chính sách bảo mật';
   static const String termsOfService = 'Điều khoản dịch vụ';

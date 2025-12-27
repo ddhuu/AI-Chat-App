@@ -1,6 +1,8 @@
 import 'package:ai_chat_assistant/core/utils/event_bus.dart';
 import 'package:ai_chat_assistant/data/services/api_service.dart';
 import 'package:ai_chat_assistant/features/auth/pages/auth_page.dart';
+import 'package:ai_chat_assistant/features/bot/providers/assistant_provider.dart';
+import 'package:ai_chat_assistant/features/bot/services/assistant_service.dart';
 import 'package:ai_chat_assistant/features/knowledge/providers/knowledge_provider.dart';
 import 'package:ai_chat_assistant/features/prompt/providers/prompt_provider.dart';
 import 'package:ai_chat_assistant/features/prompt/services/prompt_api_service.dart';
@@ -90,6 +92,12 @@ class _MyAppState extends State<MyApp> {
         // Provide KnowledgeProvider
         ChangeNotifierProvider<KnowledgeProvider>(
           create: (context) => KnowledgeProvider(widget.apiService),
+        ),
+
+        // Provide AssistantProvider
+        ChangeNotifierProvider<AssistantProvider>(
+          create: (context) =>
+              AssistantProvider(AssistantService(widget.apiService)),
         ),
       ],
       child: MaterialApp(

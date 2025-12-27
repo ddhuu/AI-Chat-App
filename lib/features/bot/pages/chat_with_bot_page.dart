@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../pricing/pricing_page.dart';
 import '../models/bot_model.dart';
+import '../models/assistant_model.dart';
 import '../../chat/widgets/message_bubble.dart';
 import '../../chat/widgets/ai_model_selector.dart';
 import '../../chat/widgets/chat_input.dart';
 import '../../chat/widgets/upload.dart';
 
 class ChatWithBotPage extends StatefulWidget {
-  final BotModel bot;
+  final BotModel? bot;
+  final Assistant? assistant;
 
-  const ChatWithBotPage({
-    super.key,
-    required this.bot,
-  });
+  const ChatWithBotPage({super.key, this.bot, this.assistant})
+    : assert(
+        bot != null || assistant != null,
+        'Either bot or assistant must be provided',
+      );
 
   @override
   State<ChatWithBotPage> createState() => _ChatWithBotPageState();
@@ -26,23 +29,24 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
 
   String? _attachedImagePath;
 
+  String get _botName =>
+      widget.bot?.name ?? widget.assistant?.assistantName ?? 'Assistant';
+
   @override
   void initState() {
     super.initState();
     // Add initial greeting message
     _messages.add({
       'isUser': false,
-      'message': 'Hi! I\'m ${widget.bot.name}. How can I help you today?',
+      'message': 'Hi! I\'m $_botName. How can I help you today?',
     });
   }
-
 
   void _handleImageRemove() {
     setState(() {
       _attachedImagePath = null;
     });
   }
-
 
   void _handleImageAttached(String sourcePath) {
     setState(() {
@@ -54,14 +58,14 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
     setState(() {
       _isEmpty = false;
 
-   
       if (_attachedImagePath != null) {
         _messages.add({
           'isUser': true,
-          'message': 'Image attached from $_attachedImagePath. Sending to bot...',
+          'message':
+              'Image attached from $_attachedImagePath. Sending to bot...',
         });
       }
-      _attachedImagePath = null; 
+      _attachedImagePath = null;
 
       // Mock bot response
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -69,7 +73,8 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
           setState(() {
             _messages.add({
               'isUser': false,
-              'message': 'This is a mock response from ${widget.bot.name}. In production, this will be connected to the AI model.',
+              'message':
+                  'This is a mock response from $_botName. In production, this will be connected to the AI model.',
             });
           });
         }
@@ -83,7 +88,7 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
       _messages.clear();
       _messages.add({
         'isUser': false,
-        'message': 'Hi! I\'m ${widget.bot.name}. How can I help you today?',
+        'message': 'Hi! I\'m $_botName. How can I help you today?',
       });
 
       _attachedImagePath = null;
@@ -114,11 +119,11 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
           await _handleGalleryUpload();
         },
         onCameraCapture: () async {
-          Navigator.pop(context); 
+          Navigator.pop(context);
           await _handleCameraCapture();
         },
         onPasteScreenshot: () async {
-          Navigator.pop(context); 
+          Navigator.pop(context);
           await _handlePasteScreenshot();
         },
       ),
@@ -163,19 +168,12 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
               ),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Icon(
-              Icons.smart_toy,
-              color: Colors.white,
-              size: 16,
-            ),
+            child: const Icon(Icons.smart_toy, color: Colors.white, size: 16),
           ),
           const SizedBox(width: 8),
           Text(
-            widget.bot.name,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            _botName,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -185,9 +183,7 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const PricingPage(),
-              ),
+              MaterialPageRoute(builder: (context) => const PricingPage()),
             );
           },
           child: Row(
@@ -233,15 +229,11 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
                 ),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
-                Icons.smart_toy,
-                color: Colors.white,
-                size: 40,
-              ),
+              child: const Icon(Icons.smart_toy, color: Colors.white, size: 40),
             ),
             const SizedBox(height: 20),
             Text(
-              'Hi! I\'m ${widget.bot.name}',
+              _botName,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -250,7 +242,7 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              widget.bot.description,
+              widget.bot?.description ?? '',
               style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
@@ -260,10 +252,7 @@ class _ChatWithBotPageState extends State<ChatWithBotPage> {
             const SizedBox(height: 24),
             const Text(
               'How can I help you today?',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: 16, color: AppColors.textPrimary),
             ),
           ],
         ),

@@ -48,4 +48,19 @@ class ApiConstants {
   static const String importGoogleDrive =
       "/kb-core/v1/knowledge/{id}/google-drive";
   static const String importLocalFile = "/kb-core/v1/knowledge/{id}/local-file";
+
+  // AI Assistant (Bot) Endpoints
+  static const String aiAssistant = "/kb-core/v1/ai-assistant";
+  static const String aiAssistantById = "/kb-core/v1/ai-assistant/{id}";
+  static const String assistantKnowledges =
+      "/kb-core/v1/ai-assistant/{assistantId}/knowledges";
+  static const String assistantKnowledgeById =
+      "/kb-core/v1/ai-assistant/{assistantId}/knowledges/{knowledgeId}";
+
+  // AI Chat Endpoints (for chatting with bot)
+  static const String aiChatMessages = "/api/v1/ai-chat/messages";
+
+  // AI Email Endpoints
+  static const String aiEmailReply = "/api/v1/ai-email";
+  static const String aiEmailSuggestIdeas = "/api/v1/ai-email/reply-ideas";
 }

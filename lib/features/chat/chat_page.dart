@@ -6,10 +6,13 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/colors.dart';
 import '../../shared/widgets/AppDrawer.dart';
+import '../../shared/widgets/profile_drawer.dart';
 import '../../shared/widgets/ad_manager.dart';
 import '../pricing/pricing_page.dart';
 import '../../main.dart';
-import 'widgets/ai_model_selector.dart';
+import '../bot/providers/assistant_provider.dart';
+import '../bot/models/assistant_model.dart';
+import 'widgets/enhanced_ai_model_selector.dart';
 import 'widgets/message_bubble.dart';
 import 'widgets/conversation.dart';
 import 'widgets/chat_history.dart';
@@ -18,7 +21,9 @@ import '../prompt/pages/prompt_library_bottom_sheet.dart';
 import '../prompt/widgets/prompt_suggestion_overlay.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({super.key});
+  final Assistant? initialBot;
+
+  const ChatPage({super.key, this.initialBot});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -26,7 +31,8 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   bool isEmpty = true;
-  String selectedModel = 'GPT-4o mini';
+  String selectedModelId = 'gpt-4o-mini';
+  bool isBot = false;
   final List<Widget> _mockMessages = [];
 
   // Chat state
@@ -49,12 +55,25 @@ class _ChatPageState extends State<ChatPage> {
     final apiService = context.read<ApiService>();
     _chatService = ChatService(apiService);
 
-    _mockMessages.add(
-      const MessageBubble(
-        message: "Hello! How can I help you today?",
-        isUser: false,
-      ),
-    );
+    // If initialBot is provided, set it as selected
+    if (widget.initialBot != null) {
+      selectedModelId = widget.initialBot!.id;
+      isBot = true;
+      _mockMessages.add(
+        MessageBubble(
+          message:
+              "Hi! I'm ${widget.initialBot!.assistantName}. ${widget.initialBot!.description ?? 'How can I help you today?'}",
+          isUser: false,
+        ),
+      );
+    } else {
+      _mockMessages.add(
+        const MessageBubble(
+          message: "Hello! How can I help you today?",
+          isUser: false,
+        ),
+      );
+    }
   }
 
   @override
@@ -67,6 +86,42 @@ class _ChatPageState extends State<ChatPage> {
   void _closePromptOverlay() {
     _promptOverlayEntry?.remove();
     _promptOverlayEntry = null;
+  }
+
+  String _getModelDisplayName() {
+    if (isBot) {
+      // For bots, use bot name from AssistantProvider
+      final provider = context.read<AssistantProvider>();
+      final bot = provider.assistants.firstWhere(
+        (a) => a.id == selectedModelId,
+        orElse: () => Assistant(
+          id: selectedModelId,
+          assistantName: 'Bot',
+          userId: '',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      return bot.assistantName;
+    }
+
+    // For base models, map ID to display name
+    final modelMap = {
+      'gpt-4o-mini': 'GPT-4o mini',
+      'gpt-4o': 'GPT-4o',
+      'gemini-1.5-flash': 'Gemini 1.5 Flash',
+      'gemini-1.5-pro': 'Gemini 1.5 Pro',
+      'gemini-2.0-flash': 'Gemini 2.0 Flash',
+      'claude-3-haiku': 'Claude 3 Haiku',
+      'claude-3.5-sonnet': 'Claude 3.5 Sonnet',
+      'deepseek-chat': 'Deepseek Chat',
+      'qwen2.5-coder-32b': 'Qwen2.5-Coder-32B-Instruct',
+      'qwen3-32b': 'Qwen3-32B',
+      'saola3.1-medium': 'SaoLa3.1-medium',
+      'saola-llama3.1-planner': 'SaoLa-Llama3.1-planner',
+    };
+
+    return modelMap[selectedModelId] ?? selectedModelId;
   }
 
   void _handleTextChanged(String text) {
@@ -82,7 +137,6 @@ class _ChatPageState extends State<ChatPage> {
     try {
       // Close existing overlay if any
       _closePromptOverlay();
-
 
       // Get TextField context from GlobalKey
       final textFieldContext = _textFieldKey.currentContext;
@@ -108,8 +162,7 @@ class _ChatPageState extends State<ChatPage> {
 
       _promptOverlayEntry = overlayHelper.createOverlayEntry();
       Overlay.of(context).insert(_promptOverlayEntry!);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   void _handleNewChat() {
@@ -158,7 +211,7 @@ class _ChatPageState extends State<ChatPage> {
       if (_conversationHistory.isEmpty) {
         response = await _chatService.createNewThread(
           message: userMessage,
-          modelDisplayName: selectedModel,
+          modelDisplayName: _getModelDisplayName(),
         );
 
         // Save conversation ID
@@ -175,7 +228,7 @@ class _ChatPageState extends State<ChatPage> {
         print('Sending message to conversation: $_conversationId');
         response = await _chatService.sendMessage(
           message: userMessage,
-          modelDisplayName: selectedModel,
+          modelDisplayName: _getModelDisplayName(),
           conversationHistory:
               [], // Always empty - server tracks history by conversationId
           conversationId:
@@ -414,42 +467,12 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Widget _buildTokenStatus() {
-    final tokenUsageProvider = context.watch<TokenUsageProvider>();
-    final isPro = tokenUsageProvider.currentUser.plan != 'free';
-    final remainingTokens = tokenUsageProvider.remainingTokens;
-    final totalTokens = tokenUsageProvider.totalTokens;
-
-    final tokenText = isPro
-        ? 'Tokens: VÔ HẠN'
-        : 'Tokens: $remainingTokens/$totalTokens';
-    final textColor = isPro ? AppColors.primary : AppColors.textSecondary;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Icon(Icons.local_fire_department, size: 16, color: Colors.blue),
-          const SizedBox(width: 4),
-          Text(
-            tokenText,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
       drawer: const SafeArea(child: AppDrawer()),
+      endDrawer: const SafeArea(child: ProfileDrawer()),
       body: Container(
         padding: const EdgeInsets.all(20),
         color: Colors.white,
@@ -517,10 +540,17 @@ class _ChatPageState extends State<ChatPage> {
           ),
         Padding(
           padding: const EdgeInsets.only(right: 16, left: 8),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.primary,
-            child: const Icon(Icons.person, color: Colors.white, size: 20),
+          child: Builder(
+            builder: (context) => GestureDetector(
+              onTap: () {
+                Scaffold.of(context).openEndDrawer();
+              },
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.primary,
+                child: const Icon(Icons.person, color: Colors.white, size: 20),
+              ),
+            ),
           ),
         ),
       ],
@@ -544,11 +574,15 @@ class _ChatPageState extends State<ChatPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            AiModelSelector(
-              selectedModel: selectedModel,
-              onModelChanged: (model) {
+            EnhancedAiModelSelector(
+              selectedModelId: selectedModelId,
+              isBot: isBot,
+              onModelChanged: (modelId, isBotSelected) {
                 setState(() {
-                  selectedModel = model;
+                  selectedModelId = modelId;
+                  isBot = isBotSelected;
+                  // Reset conversation when model changes
+                  _handleNewChat();
                 });
               },
             ),
@@ -578,7 +612,6 @@ class _ChatPageState extends State<ChatPage> {
           ],
         ),
         _buildChatInput(),
-        _buildTokenStatus(),
       ],
     );
   }

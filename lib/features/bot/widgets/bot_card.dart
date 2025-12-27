@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../models/bot_model.dart';
+import '../models/assistant_model.dart';
 import 'publishing_platform_dialog.dart';
 
 class BotCard extends StatelessWidget {
-  final BotModel bot;
+  final BotModel? bot;
+  final Assistant? assistant;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
   final VoidCallback? onFavorite;
   final VoidCallback? onPublish;
   final VoidCallback? onDelete;
 
   const BotCard({
     super.key,
-    required this.bot,
+    this.bot,
+    this.assistant,
     this.onTap,
+    this.onEdit,
     this.onFavorite,
     this.onPublish,
     this.onDelete,
-  });
+  }) : assert(
+         bot != null || assistant != null,
+         'Either bot or assistant must be provided',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +65,7 @@ class BotCard extends StatelessWidget {
                 // Bot Name
                 Expanded(
                   child: Text(
-                    bot.name,
+                    bot?.name ?? assistant?.assistantName ?? '',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -82,28 +90,38 @@ class BotCard extends StatelessWidget {
                       onPressed: () async {
                         final platforms = await showDialog<List<String>>(
                           context: context,
-                          builder: (context) => const PublishingPlatformDialog(),
+                          builder: (context) =>
+                              const PublishingPlatformDialog(),
                         );
                         if (platforms != null && onPublish != null) {
                           onPublish!();
                         }
                       },
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                     ),
 
                     // Favorite Button
                     IconButton(
                       icon: Icon(
-                        bot.isFavorite ? Icons.star : Icons.star_border,
-                        color: bot.isFavorite
+                        (bot?.isFavorite ?? assistant?.isFavorite ?? false)
+                            ? Icons.star
+                            : Icons.star_border,
+                        color:
+                            (bot?.isFavorite ?? assistant?.isFavorite ?? false)
                             ? Colors.amber
                             : AppColors.textSecondary,
                         size: 20,
                       ),
                       onPressed: onFavorite,
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                     ),
 
                     // Delete Button
@@ -115,7 +133,10 @@ class BotCard extends StatelessWidget {
                       ),
                       onPressed: onDelete,
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                     ),
                   ],
                 ),
@@ -125,8 +146,8 @@ class BotCard extends StatelessWidget {
 
             // Description
             Text(
-              bot.description.isNotEmpty 
-                  ? bot.description 
+              (bot?.description ?? assistant?.description ?? '').isNotEmpty
+                  ? (bot?.description ?? assistant?.description ?? '')
                   : 'No description available',
               style: const TextStyle(
                 fontSize: 14,
@@ -143,7 +164,10 @@ class BotCard extends StatelessWidget {
               children: [
                 // Model Icon & Name
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(6),
@@ -172,7 +196,7 @@ class BotCard extends StatelessWidget {
 
                 // Edit Button
                 OutlinedButton.icon(
-                  onPressed: onTap,
+                  onPressed: onEdit,
                   icon: const Icon(Icons.edit_outlined, size: 16),
                   label: const Text(
                     'Edit',
@@ -181,7 +205,10 @@ class BotCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: const BorderSide(color: AppColors.primary),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -201,7 +228,10 @@ class BotCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

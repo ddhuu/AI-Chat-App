@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../../shared/widgets/AppDrawer.dart';
-import '../../email/pages/email_draft_page.dart';
+import 'email_action_page.dart';
 import '../models/action_item.dart';
 import '../widgets/action_card.dart';
 
@@ -22,7 +22,7 @@ class _AIActionPageState extends State<AIActionPage> {
       name: 'Email',
       description: 'Compose professional emails with AI assistance',
       icon: Icons.email_outlined,
-      page: EmailDraftPage(),
+      page: EmailActionPage(),
     ),
     // Add more actions here in the future
     // ActionItem(
@@ -91,10 +91,7 @@ class _AIActionPageState extends State<AIActionPage> {
                 onChanged: _filterActions,
                 decoration: InputDecoration(
                   hintText: 'Search AI actions...',
-                  hintStyle: TextStyle(
-                    color: AppColors.textHint,
-                    fontSize: 14,
-                  ),
+                  hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
                   prefixIcon: Icon(
                     Icons.search,
                     color: AppColors.textSecondary,
@@ -138,12 +135,13 @@ class _AIActionPageState extends State<AIActionPage> {
                     )
                   : GridView.builder(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.9,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 0.9,
+                          ),
                       itemCount: _filteredActions.length,
                       itemBuilder: (context, index) {
                         return ActionCard(action: _filteredActions[index]);
