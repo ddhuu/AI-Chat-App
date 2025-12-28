@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/AppTheme.dart';
 import 'features/chat/chat_page.dart';
+import 'features/knowledge/services/import_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +70,10 @@ class _MyAppState extends State<MyApp> {
       providers: [
         // Provide ApiService
         Provider<ApiService>.value(value: widget.apiService),
+
+        Provider<ImportService>(
+          create: (context) => ImportService(widget.apiService),
+        ),
 
         // Provide TokenUsageProvider
         ChangeNotifierProvider<TokenUsageProvider>(
