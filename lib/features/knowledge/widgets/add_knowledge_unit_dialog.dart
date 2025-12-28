@@ -4,21 +4,23 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '/core/constants/assets.dart';
 import '/core/constants/colors.dart';
 
-// Import các dialog
-// (Các file này bạn chưa tạo, nhưng chúng ta sẽ import trước)
 import 'import_web_dialog.dart';
 import 'import_slack_dialog.dart';
 import 'import_google_drive_dialog.dart';
 import 'import_confluence_dialog.dart';
-import 'import_local_file_dialog.dart'; // <-- THÊM MỚI
+import 'import_local_file_dialog.dart';
 
 class AddKnowledgeUnitDialog extends StatelessWidget {
-  const AddKnowledgeUnitDialog({super.key});
+  final String knowledgeId;
+
+  const AddKnowledgeUnitDialog({
+    super.key,
+    required this.knowledgeId,
+  });
 
   void _openDialog(BuildContext context, Widget dialog) {
-    // Mở dialog mới (nó sẽ nằm trên dialog hiện tại)
     showDialog(
-      context: context, 
+      context: context,
       builder: (_) => dialog,
       barrierDismissible: false,
     );
@@ -28,7 +30,7 @@ class AddKnowledgeUnitDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      child: SingleChildScrollView( 
+      child: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -53,27 +55,30 @@ class AddKnowledgeUnitDialog extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               _SourceTile(
                 iconAsset: Assets.file,
                 iconPlaceholder: Icons.upload_file,
                 title: 'Local files',
                 subtitle: 'Upload PDFs, docs, and more',
-                onTap: () => _openDialog(context, const ImportLocalFileDialog()), // <-- SỬA
+                onTap: () => _openDialog(
+                  context,
+                  ImportLocalFileDialog(),
+                ),
               ),
               _SourceTile(
                 iconAsset: Assets.website,
                 iconPlaceholder: Icons.link,
                 title: 'Website',
                 subtitle: 'Sync any website content instantly',
-                onTap: () => _openDialog(context, const ImportWebDialog()),
+                onTap: () => _openDialog(context, ImportWebDialog(knowledgeId: knowledgeId)),
               ),
               _SourceTile(
                 iconAsset: Assets.googleDrive,
                 iconPlaceholder: Icons.cloud_upload_outlined,
                 title: 'Google Drive',
                 subtitle: 'Access your Drive files seamlessly',
-                onTap: () => _openDialog(context, const ImportGoogleDriveDialog()),
+                onTap: () => _openDialog(context, ImportGoogleDriveDialog()),
               ),
               _SourceTile(
                 iconAsset: Assets.slack,
@@ -119,8 +124,8 @@ class _SourceTile extends StatelessWidget {
       iconAsset,
       width: 24,
       height: 24,
-      errorBuilder: (context, error, stackTrace) => 
-        Icon(iconPlaceholder, color: AppColors.primary),
+      errorBuilder: (context, error, stackTrace) =>
+          Icon(iconPlaceholder, color: AppColors.primary),
     );
 
     return ListTile(

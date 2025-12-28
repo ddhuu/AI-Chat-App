@@ -29,15 +29,40 @@ class ImportService {
     required String webUrl,
   }) async {
     try {
-      final endpoint = ApiConstants.importWeb.replaceAll('{id}', knowledgeId);
+      final endpoint = ApiConstants.knowledgeDatasources.replaceAll('{id}', knowledgeId);
+
+      final body = {
+        "datasources": [
+          {
+            "name": unitName,
+            "type": "web",
+            "credentials": {
+              "url": webUrl,
+            }
+          }
+        ]
+      };
+
       final response = await _apiService.dio.post(
         '${ApiConstants.knowledgeBaseUrl}$endpoint',
-        data: {'unitName': unitName, 'webUrl': webUrl},
+        data: body,
         options: Options(extra: {'requireToken': true}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return Unit.fromJson(response.data as Map<String, dynamic>);
+        try {
+          if (response.data is List && response.data.isNotEmpty) {
+            return Unit.fromJson(response.data[0]);
+          } else if (response.data is Map<String, dynamic>) {
+            if (response.data['datasources'] != null &&
+                (response.data['datasources'] as List).isNotEmpty) {
+              return Unit.fromJson(response.data['datasources'][0]);
+            }
+            return Unit.fromJson(response.data);
+          }
+        } catch (parseError) {
+          return null;
+        }
       }
     } catch (e) {
       _handleException(e);

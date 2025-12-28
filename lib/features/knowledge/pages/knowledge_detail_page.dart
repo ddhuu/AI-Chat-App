@@ -63,7 +63,9 @@ class _KnowledgeDetailPageState extends State<KnowledgeDetailPage> {
   Future<void> _showAddUnitDialog() async {
     await showDialog(
       context: context,
-      builder: (context) => const AddKnowledgeUnitDialog(),
+      builder: (context) => AddKnowledgeUnitDialog(
+        knowledgeId: widget.knowledge.id,
+      ),
     );
 
     // Reload units after dialog closes
