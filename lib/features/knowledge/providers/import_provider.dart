@@ -55,7 +55,6 @@ class ImportProvider with ChangeNotifier {
   /// Import from Slack
   Future<Unit?> importSlack({
     required String unitName,
-    required String slackWorkspace,
     required String slackBotToken,
   }) async {
     _isImporting = true;
@@ -66,7 +65,6 @@ class ImportProvider with ChangeNotifier {
       final unit = await _importService.importSlack(
         knowledgeId: knowledge.id,
         unitName: unitName,
-        slackWorkspace: slackWorkspace,
         slackBotToken: slackBotToken,
       );
 
@@ -74,7 +72,11 @@ class ImportProvider with ChangeNotifier {
       notifyListeners();
       return unit;
     } catch (e) {
-      _errorMessage = e.toString();
+      if (e.toString().contains("500")) {
+        _errorMessage = "Server error. Please check your Slack Token permissions.";
+      } else {
+        _errorMessage = e.toString();
+      }
       _isImporting = false;
       notifyListeners();
       return null;
@@ -87,6 +89,7 @@ class ImportProvider with ChangeNotifier {
     required String wikiPageUrl,
     required String confluenceUsername,
     required String confluenceAccessToken,
+    required bool autoReindexEnabled,
   }) async {
     _isImporting = true;
     _errorMessage = null;
@@ -99,13 +102,23 @@ class ImportProvider with ChangeNotifier {
         wikiPageUrl: wikiPageUrl,
         confluenceUsername: confluenceUsername,
         confluenceAccessToken: confluenceAccessToken,
+        autoReindexEnabled: autoReindexEnabled,
       );
 
       _isImporting = false;
       notifyListeners();
       return unit;
     } catch (e) {
-      _errorMessage = e.toString();
+      final errorString = e.toString();
+
+      if (errorString.contains("500")) {
+        _errorMessage = "Connection failed. Please check your Confluence URL, Username (Email), and API Token.";
+      } else if (errorString.contains("401") || errorString.contains("403")) {
+        _errorMessage = "Unauthorized. Please check your API Token and permissions.";
+      } else {
+        _errorMessage = "Import failed: ${errorString.replaceAll('Exception:', '').trim()}";
+      }
+
       _isImporting = false;
       notifyListeners();
       return null;

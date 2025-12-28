@@ -72,31 +72,49 @@ class ImportService {
     return null;
   }
 
-  /// Import from Slack
   Future<Unit?> importSlack({
     required String knowledgeId,
     required String unitName,
-    required String slackWorkspace,
     required String slackBotToken,
   }) async {
     try {
-      final endpoint = ApiConstants.importSlack.replaceAll('{id}', knowledgeId);
+      final endpoint = ApiConstants.knowledgeDatasources.replaceAll('{id}', knowledgeId);
+
+      final body = {
+        "datasources": [
+          {
+            "type": "slack",
+            "name": unitName,
+            "credentials": {
+              "token": slackBotToken
+            },
+            "autoReindexEnabled": true,
+            "autoReindexIntervalHours": 12
+          }
+        ]
+      };
+
       final response = await _apiService.dio.post(
         '${ApiConstants.knowledgeBaseUrl}$endpoint',
-        data: {
-          'unitName': unitName,
-          'slackWorkspace': slackWorkspace,
-          'slackBotToken': slackBotToken,
-        },
-        options: Options(extra: {'requireToken': true}),
+        data: body,
+        options: Options(
+          extra: {'requireToken': true},
+          contentType: Headers.jsonContentType,
+        ),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return Unit.fromJson(response.data as Map<String, dynamic>);
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          if (data['datasources'] != null && (data['datasources'] as List).isNotEmpty) {
+            return Unit.fromJson(data['datasources'][0]);
+          }
+          return Unit.fromJson(data);
+        }
       }
     } catch (e) {
       _handleException(e);
-      print("Error when import from Slack: $e");
+      print("Error body sent: $unitName - Token length: ${slackBotToken.length}");
       rethrow;
     }
     return null;
@@ -109,25 +127,44 @@ class ImportService {
     required String wikiPageUrl,
     required String confluenceUsername,
     required String confluenceAccessToken,
+    bool autoReindexEnabled = false,
   }) async {
     try {
-      final endpoint = ApiConstants.importConfluence.replaceAll(
-        '{id}',
-        knowledgeId,
-      );
+      final endpoint = ApiConstants.knowledgeDatasources.replaceAll('{id}', knowledgeId);
+
+      final body = {
+        "datasources": [
+          {
+            "type": "confluence",
+            "name": unitName,
+            "credentials": {
+              "url": wikiPageUrl,
+              "username": confluenceUsername,
+              "token": confluenceAccessToken
+            },
+            "autoReindexEnabled": autoReindexEnabled
+          }
+        ]
+      };
+
       final response = await _apiService.dio.post(
         '${ApiConstants.knowledgeBaseUrl}$endpoint',
-        data: {
-          'unitName': unitName,
-          'wikiPageUrl': wikiPageUrl,
-          'confluenceUsername': confluenceUsername,
-          'confluenceAccessToken': confluenceAccessToken,
-        },
-        options: Options(extra: {'requireToken': true}),
+        data: body,
+        options: Options(
+          extra: {'requireToken': true},
+          contentType: Headers.jsonContentType,
+        ),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return Unit.fromJson(response.data as Map<String, dynamic>);
+        final data = response.data;
+        // Parse response trả về
+        if (data is Map<String, dynamic>) {
+          if (data['datasources'] != null && (data['datasources'] as List).isNotEmpty) {
+            return Unit.fromJson(data['datasources'][0]);
+          }
+          return Unit.fromJson(data);
+        }
       }
     } catch (e) {
       _handleException(e);
