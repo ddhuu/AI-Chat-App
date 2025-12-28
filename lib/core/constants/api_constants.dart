@@ -39,6 +39,7 @@ class ApiConstants {
       "/kb-core/v1/knowledge/{id}/datasources";
   static const String knowledgeDatasourceById =
       "/kb-core/v1/knowledge/{id}/datasources/{datasourceId}";
+  static const String uploadFile = "/kb-core/v1/knowledge/files";
 
   // Knowledge Import Endpoints
   static const String importWeb = "/kb-core/v1/knowledge/{id}/web";

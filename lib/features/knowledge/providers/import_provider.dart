@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import '../models/knowledge_model.dart';
 import '../models/unit_model.dart';
@@ -148,5 +149,37 @@ class ImportProvider with ChangeNotifier {
     _currentFileIndex = 0;
     _totalFiles = 0;
     notifyListeners();
+  }
+
+  Future<List<Unit>?> importFiles({
+    required List<PlatformFile> files,
+  }) async {
+    _isImporting = true;
+    _errorMessage = null;
+    _uploadProgress = 0.0;
+    _currentFileIndex = 0;
+    _totalFiles = files.length;
+    notifyListeners();
+
+    try {
+      final units = await _importService.importMultipleFiles(
+        knowledgeId: knowledge.id,
+        files: files,
+        onProgress: (fileIndex, sent, total) {
+          _currentFileIndex = fileIndex + 1;
+          _uploadProgress = sent / total;
+          notifyListeners();
+        },
+      );
+
+      _isImporting = false;
+      notifyListeners();
+      return units;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isImporting = false;
+      notifyListeners();
+      return null;
+    }
   }
 }

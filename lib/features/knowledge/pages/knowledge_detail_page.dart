@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../models/knowledge_model.dart';
 import '../models/unit_model.dart';
+import '../providers/import_provider.dart';
+import '../services/import_service.dart';
 import '../services/unit_service.dart';
 import '../../../data/services/api_service.dart';
 import '../widgets/add_knowledge_unit_dialog.dart';
@@ -61,10 +63,18 @@ class _KnowledgeDetailPageState extends State<KnowledgeDetailPage> {
   }
 
   Future<void> _showAddUnitDialog() async {
+
+    final importService = ImportService(widget.apiService);
+    final importProvider = ImportProvider(
+      importService: importService,
+      knowledge: widget.knowledge,
+    );
+
     await showDialog(
       context: context,
       builder: (context) => AddKnowledgeUnitDialog(
         knowledgeId: widget.knowledge.id,
+        importProvider: importProvider,
       ),
     );
 

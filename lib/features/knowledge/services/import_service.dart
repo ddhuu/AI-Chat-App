@@ -173,111 +173,167 @@ class ImportService {
   /// Get content type based on file extension
   MediaType _getContentType(String fileName) {
     final extension = fileName.toLowerCase().split('.').last;
-
     switch (extension) {
-      case 'pdf':
-        return MediaType('application', 'pdf');
+      case 'pdf': return MediaType('application', 'pdf');
       case 'doc':
-      case 'docx':
-        return MediaType(
-          'application',
-          'vnd.openxmlformats-officedocument.wordprocessingml.document',
-        );
+      case 'docx': return MediaType('application', 'vnd.openxmlformats-officedocument.wordprocessingml.document');
       case 'xls':
-      case 'xlsx':
-        return MediaType(
-          'application',
-          'vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        );
-      case 'ppt':
-      case 'pptx':
-        return MediaType(
-          'application',
-          'vnd.openxmlformats-officedocument.presentationml.presentation',
-        );
-      case 'txt':
-        return MediaType('text', 'plain');
-      case 'csv':
-        return MediaType('text', 'csv');
-      case 'json':
-        return MediaType('application', 'json');
-      case 'xml':
-        return MediaType('application', 'xml');
-      case 'md':
-        return MediaType('text', 'markdown');
-      default:
-        return MediaType('application', 'octet-stream');
+      case 'xlsx': return MediaType('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      case 'jpg':
+      case 'jpeg': return MediaType('image', 'jpeg');
+      case 'png': return MediaType('image', 'png');
+      case 'txt': return MediaType('text', 'plain');
+      case 'csv': return MediaType('text', 'csv');
+      case 'json': return MediaType('application', 'json');
+      case 'md': return MediaType('text', 'markdown');
+      default: return MediaType('application', 'octet-stream');
     }
   }
 
-  /// Import local file
-  Future<Unit?> importLocalFile({
-    required String knowledgeId,
+  // --- STEP 1: Upload File ---
+  Future<String?> _uploadFileStep1({
     required PlatformFile file,
     Function(int sent, int total)? onProgress,
   }) async {
     try {
       MultipartFile multipartFile;
 
-      if (!kIsWeb) {
-        // Handle mobile or desktop
-        if (file.path == null) {
-          throw Exception('File path is null');
-        }
-        multipartFile = await MultipartFile.fromFile(
-          file.path!,
-          filename: file.name,
-          contentType: _getContentType(file.name),
-        );
-      } else {
-        // Handle web
-        if (file.bytes == null) {
-          throw Exception('File bytes are null');
-        }
+      if (kIsWeb) {
+        if (file.bytes == null) throw Exception('File bytes are null');
         multipartFile = MultipartFile.fromBytes(
           file.bytes!,
           filename: file.name,
           contentType: _getContentType(file.name),
         );
+      } else {
+        if (file.path == null) throw Exception('File path is null');
+        multipartFile = await MultipartFile.fromFile(
+          file.path!,
+          filename: file.name,
+        );
       }
 
-      // Create form data
-      final formData = FormData.fromMap({'file': multipartFile});
+      // FIX 1: Use 'file' (singular). The 400 error proved 'files' was wrong.
+      final formData = FormData.fromMap({
+        'files': [multipartFile],
+      });
 
-      // Call API
-      final endpoint = ApiConstants.importLocalFile.replaceAll(
-        '{id}',
-        knowledgeId,
-      );
       final response = await _apiService.dio.post(
-        '${ApiConstants.knowledgeBaseUrl}$endpoint',
+        '${ApiConstants.knowledgeBaseUrl}${ApiConstants.uploadFile}',
         data: formData,
         options: Options(
-          headers: {'Content-Type': 'multipart/form-data'},
+          // FIX 2: Do NOT set content-type here.
+          // Dio/Browser will automatically set 'multipart/form-data; boundary=...'
           extra: {'requireToken': true},
         ),
         onSendProgress: onProgress,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return Unit.fromJson(response.data as Map<String, dynamic>);
+        final data = response.data;
+
+        // Parse logic matching your success response: {"files": [{"id": "..."}]}
+        if (data is Map<String, dynamic> && data['files'] != null) {
+          final filesList = data['files'];
+          if (filesList is List && filesList.isNotEmpty) {
+            return filesList[0]['id'];
+          }
+        }
       }
+      return null;
     } catch (e) {
-      _handleException(e);
-      print("Error when import local file: $e");
+      print("Error uploading file (Step 1): $e");
       rethrow;
     }
-    return null;
   }
 
-  /// Import multiple local files
+  Future<Unit?> _createDatasourceStep2({
+    required String knowledgeId,
+    required String fileName,
+    required String fileId,
+  }) async {
+    try {
+      final endpoint =
+      ApiConstants.knowledgeDatasources.replaceAll('{id}', knowledgeId);
+
+      final body = {
+        "datasources": [
+          {
+            "type": "local_file",
+            "name": fileName,
+            "credentials": {
+              "file": fileId,
+            }
+          }
+        ]
+      };
+
+      final response = await _apiService.dio.post(
+        '${ApiConstants.knowledgeBaseUrl}$endpoint',
+        data: body,
+        options: Options(
+          // ✅ KHÔNG set Content-Type
+          extra: {'requireToken': true},
+        ),
+      );
+
+
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          if (data['datasources'] != null &&
+              (data['datasources'] as List).isNotEmpty) {
+            return Unit.fromJson(data['datasources'][0]);
+          }
+          return Unit.fromJson(data);
+        } else if (data is List && data.isNotEmpty) {
+          return Unit.fromJson(data[0]);
+        }
+      }
+      return null;
+    } catch (e) {
+      print("Error linking datasource (Step 2): $e");
+      rethrow;
+    }
+  }
+
+  // --- Main Function ---
+  Future<Unit?> importLocalFile({
+    required String knowledgeId,
+    required PlatformFile file,
+    Function(int sent, int total)? onProgress,
+  }) async {
+    try {
+      // 1. Upload
+      final fileId = await _uploadFileStep1(
+        file: file,
+        onProgress: onProgress,
+      );
+
+      if (fileId == null) {
+        throw Exception("Failed to upload file: No ID returned from server");
+      }
+
+      // 2. Link Datasource
+      return await _createDatasourceStep2(
+        knowledgeId: knowledgeId,
+        fileName: file.name,
+        fileId: fileId,
+      );
+
+    } catch (e) {
+      _handleException(e);
+      rethrow;
+    }
+  }
+
   Future<List<Unit>> importMultipleFiles({
     required String knowledgeId,
     required List<PlatformFile> files,
     Function(int fileIndex, int sent, int total)? onProgress,
   }) async {
     final List<Unit> importedUnits = [];
-
     for (int i = 0; i < files.length; i++) {
       try {
         final unit = await importLocalFile(
@@ -287,16 +343,11 @@ class ImportService {
             onProgress?.call(i, sent, total);
           },
         );
-
-        if (unit != null) {
-          importedUnits.add(unit);
-        }
+        if (unit != null) importedUnits.add(unit);
       } catch (e) {
-        print("Error importing file ${files[i].name}: $e");
-        // Continue with next file
+        print("Failed to import ${files[i].name}: $e");
       }
     }
-
     return importedUnits;
   }
 }
