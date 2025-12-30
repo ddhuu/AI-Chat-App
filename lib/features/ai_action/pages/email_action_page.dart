@@ -113,6 +113,11 @@ class _EmailActionPageState extends State<EmailActionPage> {
         language: 'vietnamese',
       );
 
+      // Clear main idea input after successful reply
+      if (mounted) {
+        _mainIdeaController.clear();
+      }
+
       _scrollToBottom();
     } catch (e) {
       if (mounted) {

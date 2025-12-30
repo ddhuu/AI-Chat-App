@@ -104,16 +104,12 @@ class AssistantDto {
 
 // Email Reply Request
 class EmailReplyRequest {
-  final AssistantDto assistant;
-  final String model;
   final String email;
   final String action;
   final String mainIdea;
   final AiEmailMetadata metadata;
 
   EmailReplyRequest({
-    required this.assistant,
-    this.model = 'dify',
     required this.email,
     this.action = 'Reply to this email',
     required this.mainIdea,
@@ -122,8 +118,6 @@ class EmailReplyRequest {
 
   Map<String, dynamic> toJson() {
     return {
-      'assistant': assistant.toJson(),
-      'model': model,
       'email': email,
       'action': action,
       'mainIdea': mainIdea,

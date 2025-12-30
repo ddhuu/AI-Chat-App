@@ -31,7 +31,6 @@ class EmailService {
 
     try {
       final request = EmailReplyRequest(
-        assistant: AssistantDto(id: assistantId ?? 'gpt-4o-mini'),
         email: email,
         mainIdea: mainIdea,
         metadata: AiEmailMetadata(
@@ -47,19 +46,6 @@ class EmailService {
           language: language ?? 'vietnamese',
         ),
       );
-
-      print(
-        '📧 [EmailService] Sending request to: ${ApiConstants.baseUrl}${ApiConstants.aiEmailReply}',
-      );
-
-      final requestJson = request.toJson();
-      print('📧 [EmailService] Full request body:');
-      print('   assistant: ${requestJson['assistant']}');
-      print('   model: ${requestJson['model']}');
-      print('   email length: ${requestJson['email']?.toString().length}');
-      print('   action: ${requestJson['action']}');
-      print('   mainIdea: ${requestJson['mainIdea']}');
-      print('   metadata: ${requestJson['metadata']}');
 
       final response = await _apiService.dio.post(
         '${ApiConstants.baseUrl}${ApiConstants.aiEmailReply}',
