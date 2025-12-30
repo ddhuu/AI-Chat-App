@@ -83,17 +83,26 @@ class AssistantService {
     required String assistantName,
     String? instructions,
     String? description,
+    String? model,
+    List<String>? datasources,
   }) async {
     try {
+
+      final requestData = {
+        'assistantName': assistantName,
+        if (instructions != null) 'instructions': instructions,
+        if (description != null) 'description': description,
+        if (model != null) 'model': model,
+        if (datasources != null) 'datasources': datasources,
+      };
+
+
       final response = await _apiService.dio.post(
         '${ApiConstants.knowledgeBaseUrl}${ApiConstants.aiAssistant}',
-        data: {
-          'assistantName': assistantName,
-          if (instructions != null) 'instructions': instructions,
-          if (description != null) 'description': description,
-        },
+        data: requestData,
         options: Options(extra: {'requireToken': true}),
       );
+
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return Assistant.fromJson(response.data as Map<String, dynamic>);
@@ -154,9 +163,11 @@ class AssistantService {
     required String knowledgeId,
   }) async {
     try {
+
       final endpoint = ApiConstants.assistantKnowledgeById
           .replaceAll('{assistantId}', assistantId)
           .replaceAll('{knowledgeId}', knowledgeId);
+
 
       final response = await _apiService.dio.post(
         '${ApiConstants.knowledgeBaseUrl}$endpoint',
@@ -166,7 +177,12 @@ class AssistantService {
         ),
       );
 
-      return response.statusCode == 200 || response.statusCode == 201;
+
+
+      // 204 No Content is success for import operation
+      return response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204;
     } catch (e) {
       throw Exception('Failed to import knowledge: $e');
     }
@@ -178,9 +194,12 @@ class AssistantService {
     required String knowledgeId,
   }) async {
     try {
+
       final endpoint = ApiConstants.assistantKnowledgeById
           .replaceAll('{assistantId}', assistantId)
           .replaceAll('{knowledgeId}', knowledgeId);
+
+
 
       final response = await _apiService.dio.delete(
         '${ApiConstants.knowledgeBaseUrl}$endpoint',
@@ -190,11 +209,183 @@ class AssistantService {
         ),
       );
 
+
+
       return response.statusCode == 200;
     } catch (e) {
       throw Exception('Failed to remove knowledge: $e');
     }
   }
+
+  // ==================== PUBLISH BOT METHODS ====================
+
+  /// Verify Slack configuration
+  Future<bool> verifySlackConfig({
+    required String botToken,
+    required String clientId,
+    required String clientSecret,
+    required String signingSecret,
+  }) async {
+    try {
+     
+
+      final response = await _apiService.dio.post(
+        '${ApiConstants.knowledgeBaseUrl}/kb-core/v1/bot-integration/slack/validation',
+        data: {
+          'botToken': botToken,
+          'clientId': clientId,
+          'clientSecret': clientSecret,
+          'signingSecret': signingSecret,
+        },
+        options: Options(extra: {'requireToken': true}),
+      );
+
+ 
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Verify Telegram configuration
+  Future<bool> verifyTelegramConfig({required String botToken}) async {
+    try {
+
+      final response = await _apiService.dio.post(
+        '${ApiConstants.knowledgeBaseUrl}/kb-core/v1/bot-integration/telegram/validation',
+        data: {'botToken': botToken},
+        options: Options(extra: {'requireToken': true}),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Verify Messenger configuration
+  Future<bool> verifyMessengerConfig({
+    required String botToken,
+    required String pageId,
+    required String appSecret,
+  }) async {
+    try {
+
+      final response = await _apiService.dio.post(
+        '${ApiConstants.knowledgeBaseUrl}/kb-core/v1/bot-integration/messenger/validation',
+        data: {'botToken': botToken, 'pageId': pageId, 'appSecret': appSecret},
+        options: Options(extra: {'requireToken': true}),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Publish bot to Slack
+  Future<bool> publishSlackBot({
+    required String assistantId,
+    required String botToken,
+    required String clientId,
+    required String clientSecret,
+    required String signingSecret,
+  }) async {
+    try {
+
+      final response = await _apiService.dio.post(
+        '${ApiConstants.knowledgeBaseUrl}/kb-core/v1/bot-integration/slack/publish/$assistantId',
+        data: {
+          'botToken': botToken,
+          'clientId': clientId,
+          'clientSecret': clientSecret,
+          'signingSecret': signingSecret,
+        },
+        options: Options(extra: {'requireToken': true}),
+      );
+
+
+      if (response.data != null && response.data['redirect'] != null) {
+        print('[AssistantService] Bot URL: ${response.data['redirect']}');
+      }
+
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      print('[AssistantService] Publish Slack error: $e');
+      return false;
+    }
+  }
+
+  /// Publish bot to Telegram
+  Future<bool> publishTelegramBot({
+    required String assistantId,
+    required String botToken,
+  }) async {
+    try {
+     
+      final response = await _apiService.dio.post(
+        '${ApiConstants.knowledgeBaseUrl}/kb-core/v1/bot-integration/telegram/publish/$assistantId',
+        data: {'botToken': botToken},
+        options: Options(extra: {'requireToken': true}),
+      );
+
+     
+
+      if (response.data != null && response.data['redirect'] != null) {
+        print('[AssistantService] Bot URL: ${response.data['redirect']}');
+      }
+
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Publish bot to Messenger
+  Future<bool> publishMessengerBot({
+    required String assistantId,
+    required String botToken,
+    required String pageId,
+    required String appSecret,
+  }) async {
+    try {
+
+      final response = await _apiService.dio.post(
+        '${ApiConstants.knowledgeBaseUrl}/kb-core/v1/bot-integration/messenger/publish/$assistantId',
+        data: {'botToken': botToken, 'pageId': pageId, 'appSecret': appSecret},
+        options: Options(extra: {'requireToken': true}),
+      );
+
+
+      if (response.data != null && response.data['redirect'] != null) {
+        print('🔗 [AssistantService] Bot URL: ${response.data['redirect']}');
+      }
+
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Disconnect bot from platform
+  Future<bool> disconnectBot({
+    required String assistantId,
+    required String platform,
+  }) async {
+    try {
+
+      final response = await _apiService.dio.delete(
+        '${ApiConstants.knowledgeBaseUrl}/kb-core/v1/bot-integration/$platform/disconnect/$assistantId',
+        options: Options(extra: {'requireToken': true}),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ==================== END PUBLISH BOT METHODS ====================
 
   /// Get assistant's knowledges
   Future<List<dynamic>> getAssistantKnowledges({

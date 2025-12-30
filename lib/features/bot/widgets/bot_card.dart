@@ -88,12 +88,14 @@ class BotCard extends StatelessWidget {
                         size: 20,
                       ),
                       onPressed: () async {
-                        final platforms = await showDialog<List<String>>(
+                        final result = await showDialog<bool>(
                           context: context,
-                          builder: (context) =>
-                              const PublishingPlatformDialog(),
+                          builder: (context) => PublishingPlatformDialog(
+                            assistant: assistant!,
+                            configurations: const [],
+                          ),
                         );
-                        if (platforms != null && onPublish != null) {
+                        if (result == true && onPublish != null) {
                           onPublish!();
                         }
                       },

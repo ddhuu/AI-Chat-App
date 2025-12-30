@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../models/assistant_model.dart';
+import 'knowledge_base_section.dart';
 
 class EditAssistantDialog extends StatefulWidget {
   final Assistant assistant;
@@ -142,6 +143,10 @@ class _EditAssistantDialogState extends State<EditAssistantDialog> {
                   maxLines: 4,
                   textInputAction: TextInputAction.done,
                 ),
+                const SizedBox(height: 24),
+
+                // Knowledge Base Section
+                KnowledgeBaseSection(assistant: widget.assistant),
                 const SizedBox(height: 24),
 
                 // Action buttons

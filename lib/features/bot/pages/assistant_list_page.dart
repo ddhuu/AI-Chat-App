@@ -83,7 +83,7 @@ class _AssistantListPageState extends State<AssistantListPage> {
   }
 
   Future<void> _showCreateDialog() async {
-    final result = await showDialog<Map<String, String?>>(
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => const CreateAssistantDialog(),
     );
@@ -91,9 +91,11 @@ class _AssistantListPageState extends State<AssistantListPage> {
     if (result != null && mounted) {
       final provider = context.read<AssistantProvider>();
       final success = await provider.createAssistant(
-        assistantName: result['name']!,
-        description: result['description'],
-        instructions: result['instructions'],
+        assistantName: result['name'] as String,
+        description: result['description'] as String?,
+        instructions: result['instructions'] as String?,
+        model: result['model'] as String?,
+        datasources: result['datasources'] as List<String>?,
       );
 
       if (success && mounted) {

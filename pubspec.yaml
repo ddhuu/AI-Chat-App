@@ -48,6 +48,7 @@ dependencies:
   http_parser: ^4.1.2
   desktop_drop: ^0.7.0
   cross_file: ^0.3.5+1
+  url_launcher: ^6.2.5
   google_sign_in: ^6.2.1
   googleapis: ^13.1.0
   extension_google_sign_in_as_googleapis_auth: ^2.0.12

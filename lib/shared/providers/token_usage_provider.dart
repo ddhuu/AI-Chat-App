@@ -91,11 +91,9 @@ class TokenUsageProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        final userData = response.data['user'];
-        if (userData != null) {
-          _currentUser = UserModel.fromJson(userData);
-          _isAuthenticated = true;
-        }
+        // API returns user data directly, not nested under 'user' key
+        _currentUser = UserModel.fromJson(response.data);
+        _isAuthenticated = true;
       }
     } catch (e) {
       print('Error getting user: $e');

@@ -22,7 +22,9 @@ class UserModel {
       username: json['username'] as String,
       avatar: json['avatar'] as String?,
       plan: json['plan'] as String? ?? 'free',
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
     );
   }
 

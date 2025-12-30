@@ -85,6 +85,8 @@ class AssistantProvider with ChangeNotifier {
     required String assistantName,
     String? instructions,
     String? description,
+    String? model,
+    List<String>? datasources,
   }) async {
     try {
       _errorMessage = null;
@@ -92,6 +94,8 @@ class AssistantProvider with ChangeNotifier {
         assistantName: assistantName,
         instructions: instructions,
         description: description,
+        model: model,
+        datasources: datasources,
       );
 
       // Add to beginning of list
@@ -223,6 +227,138 @@ class AssistantProvider with ChangeNotifier {
       _errorMessage = e.toString();
       notifyListeners();
       return [];
+    }
+  }
+
+  // ==================== PUBLISH BOT METHODS ====================
+
+  /// Verify Slack configuration
+  Future<bool> verifySlackConfig({
+    required String botToken,
+    required String clientId,
+    required String clientSecret,
+    required String signingSecret,
+  }) async {
+    try {
+      _errorMessage = null;
+      return await _assistantService.verifySlackConfig(
+        botToken: botToken,
+        clientId: clientId,
+        clientSecret: clientSecret,
+        signingSecret: signingSecret,
+      );
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Verify Telegram configuration
+  Future<bool> verifyTelegramConfig({required String botToken}) async {
+    try {
+      _errorMessage = null;
+      return await _assistantService.verifyTelegramConfig(botToken: botToken);
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Verify Messenger configuration
+  Future<bool> verifyMessengerConfig({
+    required String botToken,
+    required String pageId,
+    required String appSecret,
+  }) async {
+    try {
+      _errorMessage = null;
+      return await _assistantService.verifyMessengerConfig(
+        botToken: botToken,
+        pageId: pageId,
+        appSecret: appSecret,
+      );
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Publish bot to Slack
+  Future<bool> publishSlackBot(
+    String assistantId, {
+    required String botToken,
+    required String clientId,
+    required String clientSecret,
+    required String signingSecret,
+  }) async {
+    try {
+      _errorMessage = null;
+      return await _assistantService.publishSlackBot(
+        assistantId: assistantId,
+        botToken: botToken,
+        clientId: clientId,
+        clientSecret: clientSecret,
+        signingSecret: signingSecret,
+      );
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Publish bot to Telegram
+  Future<bool> publishTelegramBot(String assistantId, String botToken) async {
+    try {
+      _errorMessage = null;
+      return await _assistantService.publishTelegramBot(
+        assistantId: assistantId,
+        botToken: botToken,
+      );
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Publish bot to Messenger
+  Future<bool> publishMessengerBot(
+    String assistantId, {
+    required String botToken,
+    required String pageId,
+    required String appSecret,
+  }) async {
+    try {
+      _errorMessage = null;
+      return await _assistantService.publishMessengerBot(
+        assistantId: assistantId,
+        botToken: botToken,
+        pageId: pageId,
+        appSecret: appSecret,
+      );
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Disconnect bot from platform
+  Future<bool> disconnectBot(String assistantId, String platform) async {
+    try {
+      _errorMessage = null;
+      return await _assistantService.disconnectBot(
+        assistantId: assistantId,
+        platform: platform,
+      );
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
     }
   }
 
