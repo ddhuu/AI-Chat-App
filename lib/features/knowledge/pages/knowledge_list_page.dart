@@ -235,14 +235,14 @@ class _KnowledgeListPageState extends State<KnowledgeListPage> {
           ),
         ),
         centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
-            onPressed: () {
-              context.read<KnowledgeProvider>().refresh(query: _searchQuery);
-            },
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
+        //     onPressed: () {
+        //       context.read<KnowledgeProvider>().refresh(query: _searchQuery);
+        //     },
+        //   ),
+        // ],
       ),
       drawer: const SafeArea(child: AppDrawer()),
       floatingActionButton: FloatingActionButton(

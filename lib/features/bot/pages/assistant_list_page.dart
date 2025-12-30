@@ -8,8 +8,8 @@ import '../models/assistant_model.dart';
 import '../providers/assistant_provider.dart';
 import '../widgets/bot_card.dart';
 import '../widgets/bot_dashboard.dart';
-import '../widgets/create_assistant_dialog.dart';
-import '../widgets/edit_assistant_dialog.dart';
+import 'create_bot_page.dart';
+import 'edit_bot_page.dart';
 import '../../chat/chat_page.dart';
 
 class AssistantListPage extends StatefulWidget {
@@ -83,9 +83,9 @@ class _AssistantListPageState extends State<AssistantListPage> {
   }
 
   Future<void> _showCreateDialog() async {
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => const CreateAssistantDialog(),
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(builder: (context) => const CreateBotPage()),
     );
 
     if (result != null && mounted) {
@@ -109,9 +109,11 @@ class _AssistantListPageState extends State<AssistantListPage> {
   }
 
   Future<void> _showEditDialog(Assistant assistant) async {
-    final result = await showDialog<Map<String, String?>>(
-      context: context,
-      builder: (context) => EditAssistantDialog(assistant: assistant),
+    final result = await Navigator.push<Map<String, String?>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditBotPage(assistant: assistant),
+      ),
     );
 
     if (result != null && mounted) {
@@ -206,31 +208,31 @@ class _AssistantListPageState extends State<AssistantListPage> {
           AppStrings.myBots,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        actions: [
-          // Token counter
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.bolt, size: 16, color: AppColors.primary),
-                const SizedBox(width: 4),
-                Text(
-                  tokenUsageProvider.tokenUsage.toString(),
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        // actions: [
+        //   // Token counter
+        //   Container(
+        //     margin: const EdgeInsets.only(right: 16),
+        //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        //     decoration: BoxDecoration(
+        //       color: AppColors.primary.withOpacity(0.1),
+        //       borderRadius: BorderRadius.circular(20),
+        //     ),
+        //     child: Row(
+        //       children: [
+        //         const Icon(Icons.bolt, size: 16, color: AppColors.primary),
+        //         const SizedBox(width: 4),
+        //         Text(
+        //           tokenUsageProvider.tokenUsage.toString(),
+        //           style: const TextStyle(
+        //             color: AppColors.primary,
+        //             fontWeight: FontWeight.w600,
+        //             fontSize: 12,
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ],
       ),
       drawer: const SafeArea(child: AppDrawer()),
       body: RefreshIndicator(
