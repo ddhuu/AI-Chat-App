@@ -36,4 +36,4 @@
 *[https://docs.google.com/document/d/1-kpp_WfSMuM-q8qmuCXEjxAmHn06eLxp/]*
 
 ### 🎥 Demo Milestone 3
-**Link:** []
+**Link:** [https://www.youtube.com/watch?v=2Rg-UGz6Dns]

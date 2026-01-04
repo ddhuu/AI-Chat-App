@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class ChatInputBox extends StatelessWidget {
+class ChatInputBox extends StatefulWidget {
   final VoidCallback onSend;
   final VoidCallback onUpload;
 
@@ -17,20 +17,49 @@ class ChatInputBox extends StatelessWidget {
     required this.controller,
   });
 
+  @override
+  State<ChatInputBox> createState() => _ChatInputBoxState();
+}
+
+class _ChatInputBoxState extends State<ChatInputBox> {
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTextChanged);
+    _hasText = widget.controller.text.trim().isNotEmpty;
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    final hasText = widget.controller.text.trim().isNotEmpty;
+    if (hasText != _hasText) {
+      setState(() {
+        _hasText = hasText;
+      });
+    }
+  }
+
   Widget _buildAttachedImage() {
-    if (attachedImagePath == null) {
+    if (widget.attachedImagePath == null) {
       return const SizedBox.shrink();
     }
 
-    bool isUrl = attachedImagePath!.startsWith('http');
+    bool isUrl = widget.attachedImagePath!.startsWith('http');
 
     return Container(
       margin: const EdgeInsets.only(left: 8, top: 8, bottom: 4),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.blue.shade200)
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.shade200),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -42,10 +71,11 @@ class ChatInputBox extends StatelessWidget {
               height: 40,
               child: isUrl
                   ? Image.network(
-                attachedImagePath!,
-                fit: BoxFit.cover,
-                errorBuilder: (ctx, _, __) => const Icon(Icons.broken_image, size: 20),
-              )
+                      widget.attachedImagePath!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, _, __) =>
+                          const Icon(Icons.broken_image, size: 20),
+                    )
                   : const Icon(Icons.image, size: 24, color: Colors.blue),
             ),
           ),
@@ -60,7 +90,7 @@ class ChatInputBox extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           InkWell(
-            onTap: onRemoveImage,
+            onTap: widget.onRemoveImage,
             child: Padding(
               padding: const EdgeInsets.all(4.0),
               child: Icon(Icons.close, size: 18, color: Colors.blue.shade900),
@@ -73,7 +103,7 @@ class ChatInputBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isReadyToSend = attachedImagePath != null || controller.text.trim().isNotEmpty;
+    final bool isReadyToSend = widget.attachedImagePath != null || _hasText;
 
     return Container(
       decoration: BoxDecoration(
@@ -91,7 +121,7 @@ class ChatInputBox extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               IconButton(
-                onPressed: onUpload,
+                onPressed: widget.onUpload,
                 icon: const Icon(
                   Icons.add_circle_outline,
                   color: Colors.blueGrey,
@@ -102,22 +132,25 @@ class ChatInputBox extends StatelessWidget {
               // TextField
               Expanded(
                 child: TextField(
-                  controller: controller,
+                  controller: widget.controller,
                   decoration: const InputDecoration(
                     hintText: "Type a message... (use / for prompts)",
                     hintStyle: TextStyle(fontSize: 14, color: Colors.blueGrey),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 12,
+                    ),
                   ),
                   maxLines: 4,
                   minLines: 1,
                   textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => isReadyToSend ? onSend() : null,
+                  onSubmitted: (_) => isReadyToSend ? widget.onSend() : null,
                 ),
               ),
-              
+
               IconButton(
-                onPressed: isReadyToSend ? onSend : null,
+                onPressed: isReadyToSend ? widget.onSend : null,
                 icon: Icon(
                   Icons.send,
                   color: isReadyToSend ? Colors.blue.shade700 : Colors.grey,

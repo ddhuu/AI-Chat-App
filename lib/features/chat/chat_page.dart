@@ -1,5 +1,6 @@
 import 'package:ai_chat_assistant/data/services/api_service.dart';
 import 'package:ai_chat_assistant/features/chat/services/chat_service.dart';
+import 'package:ai_chat_assistant/features/bot/services/bot_chat_service.dart';
 import 'package:ai_chat_assistant/shared/providers/token_usage_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,8 @@ import '../bot/providers/assistant_provider.dart';
 import '../bot/models/assistant_model.dart';
 import 'widgets/enhanced_ai_model_selector.dart';
 import 'widgets/message_bubble.dart';
+import 'widgets/animated_message_bubble.dart';
+import 'widgets/typing_indicator.dart';
 import 'widgets/conversation.dart';
 import 'widgets/chat_history.dart';
 import 'widgets/chat_input.dart';
@@ -36,6 +39,7 @@ class _ChatPageState extends State<ChatPage> {
   final List<Widget> _mockMessages = [];
 
   late ChatService _chatService;
+  late BotChatService _botChatService;
   String? _conversationId;
   final List<Map<String, dynamic>> _conversationHistory = [];
   bool _isSending = false;
@@ -51,20 +55,28 @@ class _ChatPageState extends State<ChatPage> {
     super.initState();
     final apiService = context.read<ApiService>();
     _chatService = ChatService(apiService);
+    _botChatService = BotChatService(apiService);
 
     if (widget.initialBot != null) {
       selectedModelId = widget.initialBot!.id;
       isBot = true;
-      _mockMessages.add(MessageBubble(
-          message: "Hi! I'm ${widget.initialBot!.assistantName}. ${widget.initialBot!.description ?? 'How can I help you today?'}",
-          isUser: false));
+      _mockMessages.add(
+        MessageBubble(
+          message:
+              "Hi! I'm ${widget.initialBot!.assistantName}. ${widget.initialBot!.description ?? 'How can I help you today?'}",
+          isUser: false,
+        ),
+      );
     } else {
-      _mockMessages.add(const MessageBubble(
-          message: "Hello! How can I help you today?", isUser: false));
+      _mockMessages.add(
+        const MessageBubble(
+          message: "Hello! How can I help you today?",
+          isUser: false,
+        ),
+      );
     }
 
-    _chatInputController.addListener(() {
-    });
+    _chatInputController.addListener(() {});
   }
 
   @override
@@ -83,7 +95,7 @@ class _ChatPageState extends State<ChatPage> {
     if (isBot) {
       final provider = context.read<AssistantProvider>();
       final bot = provider.assistants.firstWhere(
-            (a) => a.id == selectedModelId,
+        (a) => a.id == selectedModelId,
         orElse: () => Assistant(
           id: selectedModelId,
           assistantName: 'Bot',
@@ -108,7 +120,10 @@ class _ChatPageState extends State<ChatPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Paste the direct link to the image:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+            const Text(
+              'Paste the direct link to the image:',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: urlController,
@@ -190,7 +205,8 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _handleSendMessage(String userMessage) async {
-    if (_isSending || (userMessage.trim().isEmpty && _attachedImageUrl == null)) return;
+    if (_isSending || (userMessage.trim().isEmpty && _attachedImageUrl == null))
+      return;
 
     setState(() {
       _isSending = true;
@@ -199,11 +215,22 @@ class _ChatPageState extends State<ChatPage> {
 
       String displayMsg = userMessage;
       if (_attachedImageUrl != null) {
-        if(displayMsg.isEmpty) displayMsg = "[Sent an image]";
-        else displayMsg += "\n[Image Attached]";
+        if (displayMsg.isEmpty)
+          displayMsg = "[Sent an image]";
+        else
+          displayMsg += "\n[Image Attached]";
       }
 
       _mockMessages.add(MessageBubble(message: displayMsg, isUser: true));
+
+      // Add typing indicator as a placeholder
+      _mockMessages.add(
+        Container(
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: const TypingIndicator(),
+        ),
+      );
     });
 
     try {
@@ -213,21 +240,47 @@ class _ChatPageState extends State<ChatPage> {
       }
 
       Map<String, dynamic> response;
-      if (_conversationHistory.isEmpty) {
-        response = await _chatService.createNewThread(
-          message: userMessage,
-          modelDisplayName: _getModelDisplayName(),
+
+      // Use BotChatService for bot conversations
+      if (isBot) {
+        final provider = context.read<AssistantProvider>();
+        final bot = provider.assistants.firstWhere(
+          (a) => a.id == selectedModelId,
+          orElse: () => Assistant(
+            id: selectedModelId,
+            assistantName: 'Bot',
+            userId: '',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+
+        response = await _botChatService.sendMessage(
+          content: userMessage,
+          assistantId: bot.id,
+          assistantName: bot.assistantName,
+          model: bot.model ?? 'gpt-4o-mini',
+          conversationHistory: _conversationHistory,
           files: files,
         );
-        _conversationId = response['conversationId'];
       } else {
-        response = await _chatService.sendMessage(
-          message: userMessage,
-          modelDisplayName: _getModelDisplayName(),
-          conversationHistory: [],
-          conversationId: _conversationId,
-          files: files,
-        );
+        // Use ChatService for regular AI model conversations
+        if (_conversationHistory.isEmpty) {
+          response = await _chatService.createNewThread(
+            message: userMessage,
+            modelDisplayName: _getModelDisplayName(),
+            files: files,
+          );
+          _conversationId = response['conversationId'];
+        } else {
+          response = await _chatService.sendMessage(
+            message: userMessage,
+            modelDisplayName: _getModelDisplayName(),
+            conversationHistory: [],
+            conversationId: _conversationId,
+            files: files,
+          );
+        }
       }
 
       final aiResponse = response['message'] ?? 'No response';
@@ -236,17 +289,23 @@ class _ChatPageState extends State<ChatPage> {
       _conversationHistory.add({"role": "model", "content": aiResponse});
 
       setState(() {
+        // Remove typing indicator
+        if (_mockMessages.isNotEmpty) {
+          _mockMessages.removeLast();
+        }
+        // Add AI response
         _mockMessages.add(MessageBubble(message: aiResponse, isUser: false));
         _attachedImageUrl = null;
       });
 
       if (mounted) context.read<TokenUsageProvider>().getUsage();
       if (mounted) AdManager.of(context)?.showInterstitialAd();
-
     } catch (e) {
       print('Error sending message: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
         setState(() {
           if (_mockMessages.isNotEmpty) _mockMessages.removeLast();
         });
@@ -270,7 +329,10 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Future<void> _loadConversationHistory(String conversationId, String title) async {
+  Future<void> _loadConversationHistory(
+    String conversationId,
+    String title,
+  ) async {
     setState(() {
       _isSending = true;
       isEmpty = false;
@@ -292,7 +354,11 @@ class _ChatPageState extends State<ChatPage> {
 
           if (userQuery != null && userQuery.isNotEmpty) {
             _mockMessages.add(MessageBubble(message: userQuery, isUser: true));
-            _conversationHistory.add({"role": "user", "content": userQuery, "files": []});
+            _conversationHistory.add({
+              "role": "user",
+              "content": userQuery,
+              "files": [],
+            });
           }
 
           if (aiAnswer != null && aiAnswer.isNotEmpty) {
@@ -358,10 +424,18 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 Text(
                   'Upgrade',
-                  style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 17),
+                  style: TextStyle(
+                    color: Colors.blue.shade700,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                  ),
                 ),
                 const SizedBox(width: 4),
-                Icon(Icons.rocket_launch, color: Colors.blue.shade700, size: 20),
+                Icon(
+                  Icons.rocket_launch,
+                  color: Colors.blue.shade700,
+                  size: 20,
+                ),
               ],
             ),
           )
@@ -372,7 +446,14 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 const Icon(Icons.verified, color: AppColors.primary, size: 20),
                 const SizedBox(width: 4),
-                Text('Pro', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 17)),
+                Text(
+                  'Pro',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                  ),
+                ),
               ],
             ),
           ),
@@ -396,7 +477,17 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildConversation() {
     return ListView.builder(
       itemCount: _mockMessages.length,
-      itemBuilder: (context, index) => _mockMessages[index],
+      itemBuilder: (context, index) {
+        final message = _mockMessages[index];
+        final isUserMessage = message is MessageBubble && message.isUser;
+
+        return AnimatedMessageBubble(
+          key: ValueKey('message_$index'),
+          index: index,
+          isUser: isUserMessage,
+          child: message,
+        );
+      },
     );
   }
 
@@ -422,7 +513,10 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 IconButton(
                   onPressed: _showPromptLibrary,
-                  icon: const Icon(Icons.lightbulb_outline, color: Colors.amber),
+                  icon: const Icon(
+                    Icons.lightbulb_outline,
+                    color: Colors.amber,
+                  ),
                   tooltip: 'Prompt Library',
                 ),
                 IconButton(
@@ -431,7 +525,10 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 IconButton(
                   onPressed: _handleNewChat,
-                  icon: Icon(Icons.add_comment_outlined, color: Colors.blue.shade700),
+                  icon: Icon(
+                    Icons.add_comment_outlined,
+                    color: Colors.blue.shade700,
+                  ),
                 ),
               ],
             ),
