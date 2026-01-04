@@ -2,7 +2,6 @@
 
 ## Team Information
 **Course:** Advanced Mobile Programming  
-**Project Milestone:** Milestone 1
 
 ### Team Members
 - **21120460** - Nguyễn Tấn Hùng
@@ -11,6 +10,8 @@
 
 ---
 
+
+
 ## Milestone 1 
 
 ### 📋 Widget Tree
@@ -18,3 +19,21 @@
 
 ### 🎥 Demo Video
 **Link:** [https://www.youtube.com/watch?v=dESdC7M2aV4]
+
+
+## Milestone 2
+
+### 📋 Report
+*[https://docs.google.com/document/d/1k_AVp0i7e8WA-oddU_gtqN1SPf7jlle1/]*
+
+### 🎥 Demo Milestone 2
+**Link:** [https://www.youtube.com/watch?v=XwvLnDL1G-0]
+
+
+## Milestone 3
+
+### 📋 Report
+*[https://docs.google.com/document/d/1-kpp_WfSMuM-q8qmuCXEjxAmHn06eLxp/]*
+
+### 🎥 Demo Milestone 3
+**Link:** []

@@ -1,26 +1,34 @@
-// lib/screens/knowledge/widgets/add_knowledge_unit_dialog.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+import '../providers/import_provider.dart';
 import '/core/constants/assets.dart';
 import '/core/constants/colors.dart';
 
-// Import các dialog
-// (Các file này bạn chưa tạo, nhưng chúng ta sẽ import trước)
 import 'import_web_dialog.dart';
 import 'import_slack_dialog.dart';
 import 'import_google_drive_dialog.dart';
 import 'import_confluence_dialog.dart';
-import 'import_local_file_dialog.dart'; // <-- THÊM MỚI
+import 'import_local_file_dialog.dart';
 
 class AddKnowledgeUnitDialog extends StatelessWidget {
-  const AddKnowledgeUnitDialog({super.key});
+  final String knowledgeId;
+  final ImportProvider importProvider;
 
-  void _openDialog(BuildContext context, Widget dialog) {
-    // Mở dialog mới (nó sẽ nằm trên dialog hiện tại)
+  const AddKnowledgeUnitDialog({
+    super.key,
+    required this.knowledgeId,
+    required this.importProvider,
+  });
+
+  void _openDialog(BuildContext context, Widget dialogWidget) {
     showDialog(
-      context: context, 
-      builder: (_) => dialog,
-      barrierDismissible: false,
+      context: context,
+      builder: (dialogContext) {
+        return ChangeNotifierProvider.value(
+          value: importProvider,
+          child: dialogWidget,
+        );
+      },
     );
   }
 
@@ -28,7 +36,7 @@ class AddKnowledgeUnitDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      child: SingleChildScrollView( 
+      child: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -53,20 +61,26 @@ class AddKnowledgeUnitDialog extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               _SourceTile(
                 iconAsset: Assets.file,
                 iconPlaceholder: Icons.upload_file,
                 title: 'Local files',
                 subtitle: 'Upload PDFs, docs, and more',
-                onTap: () => _openDialog(context, const ImportLocalFileDialog()), // <-- SỬA
+                onTap: () => _openDialog(
+                  context,
+                  const ImportLocalFileDialog(),
+                ),
               ),
               _SourceTile(
                 iconAsset: Assets.website,
                 iconPlaceholder: Icons.link,
                 title: 'Website',
                 subtitle: 'Sync any website content instantly',
-                onTap: () => _openDialog(context, const ImportWebDialog()),
+                onTap: () => _openDialog(
+                    context,
+                    ImportWebDialog(knowledgeId: knowledgeId)
+                ),
               ),
               _SourceTile(
                 iconAsset: Assets.googleDrive,
@@ -97,7 +111,6 @@ class AddKnowledgeUnitDialog extends StatelessWidget {
   }
 }
 
-// Widget con _SourceTile (Giữ nguyên)
 class _SourceTile extends StatelessWidget {
   final String iconAsset;
   final IconData iconPlaceholder;
@@ -119,8 +132,8 @@ class _SourceTile extends StatelessWidget {
       iconAsset,
       width: 24,
       height: 24,
-      errorBuilder: (context, error, stackTrace) => 
-        Icon(iconPlaceholder, color: AppColors.primary),
+      errorBuilder: (context, error, stackTrace) =>
+          Icon(iconPlaceholder, color: AppColors.primary),
     );
 
     return ListTile(

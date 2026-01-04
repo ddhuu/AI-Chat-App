@@ -11,12 +11,19 @@ class PrivatePromptList extends StatefulWidget {
   final Function(PrivatePrompt) onEdit;
   final Function(String, bool) onToggleFavorite;
 
+  final VoidCallback onLoadMore;
+  final bool hasMore;
+  final bool isLoadingMore;
+
   const PrivatePromptList({
     super.key,
     required this.prompts,
     required this.onDelete,
     required this.onEdit,
     required this.onToggleFavorite,
+    required this.onLoadMore,
+    this.hasMore = false,
+    this.isLoadingMore = false,
   });
 
   @override
@@ -24,33 +31,46 @@ class PrivatePromptList extends StatefulWidget {
 }
 
 class _PrivatePromptListState extends State<PrivatePromptList> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !widget.isLoadingMore &&
+        widget.hasMore) {
+      widget.onLoadMore();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (widget.prompts.isEmpty) {
+    if (widget.prompts.isEmpty && !widget.isLoadingMore) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.note_add_outlined,
-              size: 64,
-              color: AppColors.textHint,
-            ),
+            Icon(Icons.note_add_outlined, size: 64, color: AppColors.textHint),
             const SizedBox(height: 16),
             Text(
               'No private prompts yet',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 8),
             Text(
               'Create your first prompt',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textHint,
-              ),
+              style: TextStyle(fontSize: 14, color: AppColors.textHint),
             ),
           ],
         ),
@@ -58,16 +78,33 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.only(top: 8),
-      itemCount: widget.prompts.length,
-      separatorBuilder: (context, index) => Divider(
-        height: 1,
-        color: AppColors.divider,
-      ),
+      controller: _scrollController,
+      padding: const EdgeInsets.only(top: 8, bottom: 20),
+      itemCount: widget.prompts.length + (widget.hasMore ? 1 : 0),
+      separatorBuilder: (context, index) =>
+          Divider(height: 1, color: AppColors.divider),
       itemBuilder: (context, index) {
+        if (index == widget.prompts.length) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        }
+
         final prompt = widget.prompts[index];
         return ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          contentPadding: const EdgeInsets.only(
+            left: 20,
+            right: 4,
+            top: 4,
+            bottom: 4,
+          ),
           title: Text(
             prompt.name,
             style: const TextStyle(
@@ -79,27 +116,24 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Favorite button
               IconButton(
                 icon: Icon(
                   prompt.isFavorite ? Icons.star : Icons.star_border,
-                  color: prompt.isFavorite ? Colors.amber : AppColors.textSecondary,
+                  color: prompt.isFavorite
+                      ? Colors.amber
+                      : AppColors.textSecondary,
                   size: 20,
                 ),
-                onPressed: () {
-                  widget.onToggleFavorite(prompt.id, !prompt.isFavorite);
-                },
+                onPressed: () =>
+                    widget.onToggleFavorite(prompt.id, !prompt.isFavorite),
               ),
-              // Edit button
               IconButton(
                 onPressed: () {
                   showDialog(
                     context: context,
                     builder: (context) => EditPromptDialog(
                       prompt: prompt,
-                      onSave: (updatedPrompt) {
-                        widget.onEdit(updatedPrompt);
-                      },
+                      onSave: (updatedPrompt) => widget.onEdit(updatedPrompt),
                     ),
                   );
                 },
@@ -109,16 +143,13 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
                   size: 20,
                 ),
               ),
-              // Delete button
               IconButton(
                 onPressed: () {
                   showDialog(
                     context: context,
                     builder: (context) => DeletePromptDialog(
                       promptName: prompt.name,
-                      onConfirm: () {
-                        widget.onDelete(prompt.id);
-                      },
+                      onConfirm: () => widget.onDelete(prompt.id),
                     ),
                   );
                 },
@@ -128,17 +159,23 @@ class _PrivatePromptListState extends State<PrivatePromptList> {
                   size: 20,
                 ),
               ),
-              // Use button
               IconButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => UsingPromptBottomSheet(
-                      prompt: prompt,
-                    ),
-                  );
+                onPressed: () async {
+                  final String? filledPrompt =
+                      await showModalBottomSheet<String>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) =>
+                            UsingPromptBottomSheet(prompt: prompt),
+                      );
+
+                  // Close PromptLibraryBottomSheet and return filled prompt
+                  if (filledPrompt != null && filledPrompt.isNotEmpty) {
+                    if (context.mounted) {
+                      Navigator.pop(context, filledPrompt);
+                    }
+                  }
                 },
                 icon: Icon(
                   Icons.arrow_forward,

@@ -3,12 +3,18 @@ class PromptModel {
   final String id;
   final String name;
   final String content;
+  final String category;
+  final String description;
+  final bool isPublic;
   bool isFavorite;
 
   PromptModel({
     required this.id,
     required this.name,
     required this.content,
+    this.category = 'other',
+    this.description = '',
+    this.isPublic = false,
     this.isFavorite = false,
   });
 
@@ -35,48 +41,17 @@ class PrivatePrompt extends PromptModel {
     required super.id,
     required super.name,
     required super.content,
+    super.category,
+    super.description,
     super.isFavorite,
-  });
+  }) : super(isPublic: false);
 
   factory PrivatePrompt.fromJson(Map<String, dynamic> json) {
     return PrivatePrompt(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: json['_id'] as String? ?? json['id'] as String,
+      name: json['title'] as String? ?? json['name'] as String,
       content: json['content'] as String,
-      isFavorite: json['isFavorite'] as bool? ?? false,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'content': content,
-      'isFavorite': isFavorite,
-    };
-  }
-}
-
-/// Public Prompt (community/template)
-class PublicPrompt extends PromptModel {
-  final String category;
-  final String description;
-
-  PublicPrompt({
-    required super.id,
-    required super.name,
-    required super.content,
-    required this.category,
-    this.description = '',
-    super.isFavorite,
-  });
-
-  factory PublicPrompt.fromJson(Map<String, dynamic> json) {
-    return PublicPrompt(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      content: json['content'] as String,
-      category: json['category'] as String,
+      category: json['category'] as String? ?? 'other',
       description: json['description'] as String? ?? '',
       isFavorite: json['isFavorite'] as bool? ?? false,
     );
@@ -84,12 +59,47 @@ class PublicPrompt extends PromptModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'name': name,
+      'title': name,
       'content': content,
       'category': category,
       'description': description,
-      'isFavorite': isFavorite,
+      'isPublic': false,
+      'language': 'English',
+    };
+  }
+}
+
+/// Public Prompt (community/template)
+class PublicPrompt extends PromptModel {
+  PublicPrompt({
+    required super.id,
+    required super.name,
+    required super.content,
+    required super.category,
+    super.description,
+    super.isFavorite,
+  }) : super(isPublic: true);
+
+  factory PublicPrompt.fromJson(Map<String, dynamic> json) {
+    return PublicPrompt(
+      id: json['_id'] as String? ?? json['id'] as String,
+      name: json['title'] as String? ?? json['name'] as String,
+      content: json['content'] as String? ?? '',
+      category:
+          json['category'] as String? ?? 'other', // Default to 'other' if null
+      description: json['description'] as String? ?? '',
+      isFavorite: json['isFavorite'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': name,
+      'content': content,
+      'category': category,
+      'description': description,
+      'isPublic': true,
+      'language': 'English',
     };
   }
 }
