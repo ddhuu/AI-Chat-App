@@ -16,7 +16,7 @@ import 'widgets/enhanced_ai_model_selector.dart';
 import 'widgets/message_bubble.dart';
 import 'widgets/conversation.dart';
 import 'widgets/chat_history.dart';
-import 'widgets/upload.dart';
+import 'widgets/chat_input.dart';
 import '../prompt/pages/prompt_library_bottom_sheet.dart';
 import '../prompt/widgets/prompt_suggestion_overlay.dart';
 
@@ -35,45 +35,36 @@ class _ChatPageState extends State<ChatPage> {
   bool isBot = false;
   final List<Widget> _mockMessages = [];
 
-  // Chat state
   late ChatService _chatService;
   String? _conversationId;
   final List<Map<String, dynamic>> _conversationHistory = [];
   bool _isSending = false;
 
-  // Slash command overlay
+  String? _attachedImageUrl;
+
   OverlayEntry? _promptOverlayEntry;
   final TextEditingController _chatInputController = TextEditingController();
   final GlobalKey _textFieldKey = GlobalKey();
 
-  String? _attachedImagePath;
-
   @override
   void initState() {
     super.initState();
-    // Initialize ChatService
     final apiService = context.read<ApiService>();
     _chatService = ChatService(apiService);
 
-    // If initialBot is provided, set it as selected
     if (widget.initialBot != null) {
       selectedModelId = widget.initialBot!.id;
       isBot = true;
-      _mockMessages.add(
-        MessageBubble(
-          message:
-              "Hi! I'm ${widget.initialBot!.assistantName}. ${widget.initialBot!.description ?? 'How can I help you today?'}",
-          isUser: false,
-        ),
-      );
+      _mockMessages.add(MessageBubble(
+          message: "Hi! I'm ${widget.initialBot!.assistantName}. ${widget.initialBot!.description ?? 'How can I help you today?'}",
+          isUser: false));
     } else {
-      _mockMessages.add(
-        const MessageBubble(
-          message: "Hello! How can I help you today?",
-          isUser: false,
-        ),
-      );
+      _mockMessages.add(const MessageBubble(
+          message: "Hello! How can I help you today?", isUser: false));
     }
+
+    _chatInputController.addListener(() {
+    });
   }
 
   @override
@@ -90,10 +81,9 @@ class _ChatPageState extends State<ChatPage> {
 
   String _getModelDisplayName() {
     if (isBot) {
-      // For bots, use bot name from AssistantProvider
       final provider = context.read<AssistantProvider>();
       final bot = provider.assistants.firstWhere(
-        (a) => a.id == selectedModelId,
+            (a) => a.id == selectedModelId,
         orElse: () => Assistant(
           id: selectedModelId,
           assistantName: 'Bot',
@@ -105,52 +95,70 @@ class _ChatPageState extends State<ChatPage> {
       return bot.assistantName;
     }
 
-    // For base models, map ID to display name
-    final modelMap = {
-      'gpt-4o-mini': 'GPT-4o mini',
-      'gpt-4o': 'GPT-4o',
-      'gemini-1.5-flash': 'Gemini 1.5 Flash',
-      'gemini-1.5-pro': 'Gemini 1.5 Pro',
-      'gemini-2.0-flash': 'Gemini 2.0 Flash',
-      'claude-3-haiku': 'Claude 3 Haiku',
-      'claude-3.5-sonnet': 'Claude 3.5 Sonnet',
-      'deepseek-chat': 'Deepseek Chat',
-      'qwen2.5-coder-32b': 'Qwen2.5-Coder-32B-Instruct',
-      'qwen3-32b': 'Qwen3-32B',
-      'saola3.1-medium': 'SaoLa3.1-medium',
-      'saola-llama3.1-planner': 'SaoLa-Llama3.1-planner',
-    };
-
-    return modelMap[selectedModelId] ?? selectedModelId;
+    return selectedModelId;
   }
 
-  void _handleTextChanged(String text) {
-    // Detect slash command
-    if (text.endsWith('/')) {
-      _showPromptOverlay();
-    } else if (_promptOverlayEntry != null && !text.endsWith('/')) {
-      _closePromptOverlay();
-    }
+  Future<void> _showUrlInputDialog() async {
+    final urlController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Attach Image Link'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Paste the direct link to the image:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: urlController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'https://example.com/image.jpg',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.link),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (urlController.text.trim().isNotEmpty) {
+                setState(() {
+                  _attachedImageUrl = urlController.text.trim();
+                });
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Attach'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleImageRemove() {
+    setState(() {
+      _attachedImageUrl = null;
+    });
   }
 
   void _showPromptOverlay() {
     try {
-      // Close existing overlay if any
       _closePromptOverlay();
-
-      // Get TextField context from GlobalKey
       final textFieldContext = _textFieldKey.currentContext;
-      if (textFieldContext == null) {
-        return;
-      }
+      if (textFieldContext == null) return;
 
-      // Create and show new overlay
       final overlayHelper = PromptSuggestionOverlayHelper(
         context: textFieldContext,
         onClose: _closePromptOverlay,
         onUsePrompt: (String? promptText) {
           if (promptText != null && promptText.isNotEmpty) {
-            // Remove the trailing '/' and send the prompt
             final currentText = _chatInputController.text;
             if (currentText.endsWith('/')) {
               _chatInputController.clear();
@@ -175,131 +183,72 @@ class _ChatPageState extends State<ChatPage> {
           isUser: false,
         ),
       );
-
-      // Reset conversation state for new thread
       _conversationId = null;
       _conversationHistory.clear();
-
-      print('🆕 Starting new chat thread');
+      _attachedImageUrl = null;
     });
   }
 
   Future<void> _handleSendMessage(String userMessage) async {
-    if (_isSending || userMessage.trim().isEmpty) return;
-
-    print(
-      'Sending message: ${userMessage.substring(0, userMessage.length > 50 ? 50 : userMessage.length)}...',
-    );
+    if (_isSending || (userMessage.trim().isEmpty && _attachedImageUrl == null)) return;
 
     setState(() {
       _isSending = true;
       isEmpty = false;
+      if (_conversationHistory.isEmpty) _mockMessages.clear();
 
-      // Clear initial welcome message on first user message
-      if (_conversationHistory.isEmpty) {
-        _mockMessages.clear();
+      String displayMsg = userMessage;
+      if (_attachedImageUrl != null) {
+        if(displayMsg.isEmpty) displayMsg = "[Sent an image]";
+        else displayMsg += "\n[Image Attached]";
       }
 
-      // Add user message to UI
-      _mockMessages.add(MessageBubble(message: userMessage, isUser: true));
+      _mockMessages.add(MessageBubble(message: displayMsg, isUser: true));
     });
 
     try {
-      Map<String, dynamic> response;
+      List<String>? files;
+      if (_attachedImageUrl != null) {
+        files = [_attachedImageUrl!];
+      }
 
-      // First message - create new thread
+      Map<String, dynamic> response;
       if (_conversationHistory.isEmpty) {
         response = await _chatService.createNewThread(
           message: userMessage,
           modelDisplayName: _getModelDisplayName(),
+          files: files,
         );
-
-        // Save conversation ID
-        if (response['conversationId'] != null) {
-          _conversationId = response['conversationId'];
-          print('New conversation created with ID: $_conversationId');
-        } else {
-          print('No conversationId in response: ${response.keys}');
-          print('Response data: ${response.toString()}');
-          print('Conversation will be created after next message');
-        }
+        _conversationId = response['conversationId'];
       } else {
-        // Subsequent messages - send with conversationId only (messages array stays empty)
-        print('Sending message to conversation: $_conversationId');
         response = await _chatService.sendMessage(
           message: userMessage,
           modelDisplayName: _getModelDisplayName(),
-          conversationHistory:
-              [], // Always empty - server tracks history by conversationId
-          conversationId:
-              _conversationId, // IMPORTANT: Pass conversationId to persist messages
+          conversationHistory: [],
+          conversationId: _conversationId,
+          files: files,
         );
-
-        // Check if conversationId is returned in subsequent messages
-        if (_conversationId == null && response['conversationId'] != null) {
-          _conversationId = response['conversationId'];
-          print('Conversation ID received on message 2: $_conversationId');
-        } else {
-          print('Message sent to conversation: $_conversationId');
-        }
       }
 
-      // Get AI response
       final aiResponse = response['message'] ?? 'No response';
 
-      // Add user message to history AFTER getting response
-      _conversationHistory.add({
-        "role": "user",
-        "content": userMessage,
-        "files": [],
-      });
-
-      // Add AI response to history
+      _conversationHistory.add({"role": "user", "content": userMessage});
       _conversationHistory.add({"role": "model", "content": aiResponse});
 
-      // Add AI response to UI
       setState(() {
         _mockMessages.add(MessageBubble(message: aiResponse, isUser: false));
+        _attachedImageUrl = null;
       });
 
-      // Update token usage
-      if (response['remainingUsage'] != null && mounted) {
-        try {
-          final tokenProvider = context.read<TokenUsageProvider>();
-          await tokenProvider.getUsage();
-        } catch (e) {
-          print('Failed to update token usage: $e');
-        }
-      }
+      if (mounted) context.read<TokenUsageProvider>().getUsage();
+      if (mounted) AdManager.of(context)?.showInterstitialAd();
 
-      // Show ad (wrapped in try-catch to prevent crashes)
-      if (mounted) {
-        try {
-          AdManager.of(context)?.showInterstitialAd();
-        } catch (e) {
-          print('Failed to show ad: $e');
-        }
-      }
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error sending message: $e');
-      print('Stack trace: $stackTrace');
-
-      // Show error
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to send message: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-
-      // Remove user message on error
-      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
         setState(() {
-          if (_mockMessages.isNotEmpty) {
-            _mockMessages.removeLast();
-          }
+          if (_mockMessages.isNotEmpty) _mockMessages.removeLast();
         });
       }
     } finally {
@@ -307,11 +256,6 @@ class _ChatPageState extends State<ChatPage> {
         _isSending = false;
       });
     }
-  }
-
-  void _handleOpenConversation() {
-    // This will be called by ChatInputBox
-    // Actual sending is handled by _handleSendMessage
   }
 
   void _showHistoryBottomSheet() {
@@ -326,10 +270,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Future<void> _loadConversationHistory(
-    String conversationId,
-    String title,
-  ) async {
+  Future<void> _loadConversationHistory(String conversationId, String title) async {
     setState(() {
       _isSending = true;
       isEmpty = false;
@@ -344,32 +285,18 @@ class _ChatPageState extends State<ChatPage> {
         assistantModel: 'dify',
       );
 
-      print('Loaded ${messages.length} messages from conversation');
-
       setState(() {
         for (var msg in messages) {
-          // API returns: { query: "user message", answer: "AI response" }
           final userQuery = msg['query'] as String?;
           final aiAnswer = msg['answer'] as String?;
 
-          print('Query: $userQuery');
-          print('Answer: $aiAnswer');
-
-          // Add user message
           if (userQuery != null && userQuery.isNotEmpty) {
             _mockMessages.add(MessageBubble(message: userQuery, isUser: true));
-
-            _conversationHistory.add({
-              "role": "user",
-              "content": userQuery,
-              "files": [],
-            });
+            _conversationHistory.add({"role": "user", "content": userQuery, "files": []});
           }
 
-          // Add AI response
           if (aiAnswer != null && aiAnswer.isNotEmpty) {
             _mockMessages.add(MessageBubble(message: aiAnswer, isUser: false));
-
             _conversationHistory.add({"role": "model", "content": aiAnswer});
           }
         }
@@ -377,73 +304,7 @@ class _ChatPageState extends State<ChatPage> {
       });
     } catch (e) {
       setState(() => _isSending = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load conversation: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
-  }
-
-  void _handleImageAttached(String sourcePath) {
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _attachedImagePath = sourcePath;
-    });
-  }
-
-  void _handleImageRemove() {
-    setState(() {
-      _attachedImagePath = null;
-    });
-  }
-
-  Future<void> _handleGalleryUpload() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _handleImageAttached('Gallery Image');
-  }
-
-  Future<void> _handleCameraCapture() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _handleImageAttached('Camera Capture');
-  }
-
-  Future<void> _handlePasteScreenshot() async {
-    final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
-
-    if (clipboardData?.text != null) {
-      _handleImageAttached('Screenshot');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No image data found on clipboard.')),
-      );
-    }
-  }
-
-  void _showUploadBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => UploadOptionsSheet(
-        onGalleryUpload: () async {
-          Navigator.pop(context);
-          await _handleGalleryUpload();
-        },
-        onCameraCapture: () async {
-          Navigator.pop(context);
-          await _handleCameraCapture();
-        },
-        onPasteScreenshot: () async {
-          Navigator.pop(context);
-          await _handlePasteScreenshot();
-        },
-      ),
-      barrierColor: Colors.black.withOpacity(0.2),
-    );
   }
 
   void _showPromptLibrary() async {
@@ -454,16 +315,8 @@ class _ChatPageState extends State<ChatPage> {
       builder: (context) => const PromptLibraryBottomSheet(),
     );
 
-    print('Prompt library returned: ${promptText ?? "null"}');
-
-    // If user selected and filled a prompt, send it
     if (promptText != null && promptText.isNotEmpty) {
-      print(
-        'Prompt received from library: ${promptText.substring(0, promptText.length > 50 ? 50 : promptText.length)}...',
-      );
       await _handleSendMessage(promptText);
-    } else {
-      print('Prompt text is null or empty, not sending');
     }
   }
 
@@ -479,7 +332,7 @@ class _ChatPageState extends State<ChatPage> {
         child: Column(
           children: [
             isEmpty
-                ? Conversation(onPromptTap: _handleOpenConversation)
+                ? Conversation(onPromptTap: () {})
                 : Expanded(child: _buildConversation()),
             _buildChatBox(),
           ],
@@ -505,18 +358,10 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 Text(
                   'Upgrade',
-                  style: TextStyle(
-                    color: Colors.blue.shade700,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17,
-                  ),
+                  style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 17),
                 ),
                 const SizedBox(width: 4),
-                Icon(
-                  Icons.rocket_launch,
-                  color: Colors.blue.shade700,
-                  size: 20,
-                ),
+                Icon(Icons.rocket_launch, color: Colors.blue.shade700, size: 20),
               ],
             ),
           )
@@ -527,14 +372,7 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 const Icon(Icons.verified, color: AppColors.primary, size: 20),
                 const SizedBox(width: 4),
-                Text(
-                  'Pro',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17,
-                  ),
-                ),
+                Text('Pro', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 17)),
               ],
             ),
           ),
@@ -542,9 +380,7 @@ class _ChatPageState extends State<ChatPage> {
           padding: const EdgeInsets.only(right: 16, left: 8),
           child: Builder(
             builder: (context) => GestureDetector(
-              onTap: () {
-                Scaffold.of(context).openEndDrawer();
-              },
+              onTap: () => Scaffold.of(context).openEndDrawer(),
               child: CircleAvatar(
                 radius: 18,
                 backgroundColor: AppColors.primary,
@@ -558,12 +394,9 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildConversation() {
-    print('Building conversation with ${_mockMessages.length} messages');
     return ListView.builder(
       itemCount: _mockMessages.length,
-      itemBuilder: (context, index) {
-        return _mockMessages[index];
-      },
+      itemBuilder: (context, index) => _mockMessages[index],
     );
   }
 
@@ -581,7 +414,6 @@ class _ChatPageState extends State<ChatPage> {
                 setState(() {
                   selectedModelId = modelId;
                   isBot = isBotSelected;
-                  // Reset conversation when model changes
                   _handleNewChat();
                 });
               },
@@ -590,10 +422,7 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 IconButton(
                   onPressed: _showPromptLibrary,
-                  icon: const Icon(
-                    Icons.lightbulb_outline,
-                    color: Colors.amber,
-                  ),
+                  icon: const Icon(Icons.lightbulb_outline, color: Colors.amber),
                   tooltip: 'Prompt Library',
                 ),
                 IconButton(
@@ -602,82 +431,28 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 IconButton(
                   onPressed: _handleNewChat,
-                  icon: Icon(
-                    Icons.add_comment_outlined,
-                    color: Colors.blue.shade700,
-                  ),
+                  icon: Icon(Icons.add_comment_outlined, color: Colors.blue.shade700),
                 ),
               ],
             ),
           ],
         ),
-        _buildChatInput(),
+        const SizedBox(height: 8),
+
+        ChatInputBox(
+          controller: _chatInputController,
+          onSend: () {
+            final text = _chatInputController.text.trim();
+            if (text.isNotEmpty || _attachedImageUrl != null) {
+              _handleSendMessage(text);
+              _chatInputController.clear();
+            }
+          },
+          onUpload: _showUrlInputDialog,
+          attachedImagePath: _attachedImageUrl,
+          onRemoveImage: _handleImageRemove,
+        ),
       ],
-    );
-  }
-
-  Widget _buildChatInput() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          // Upload button
-          IconButton(
-            onPressed: _showUploadBottomSheet,
-            icon: const Icon(Icons.add_circle_outline),
-            color: Colors.grey.shade600,
-          ),
-
-          // Text input
-          Expanded(
-            child: TextField(
-              key: _textFieldKey,
-              controller: _chatInputController,
-              decoration: const InputDecoration(
-                hintText: 'Type a message... (use / for prompts)',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 8),
-              ),
-              maxLines: null,
-              textInputAction: TextInputAction.send,
-              enabled: !_isSending,
-              onChanged: _handleTextChanged,
-              onSubmitted: (text) {
-                if (text.trim().isNotEmpty) {
-                  _handleSendMessage(text.trim());
-                  _chatInputController.clear();
-                }
-              },
-            ),
-          ),
-
-          // Send button
-          IconButton(
-            onPressed: _isSending
-                ? null
-                : () {
-                    final text = _chatInputController.text.trim();
-                    if (text.isNotEmpty) {
-                      _handleSendMessage(text);
-                      _chatInputController.clear();
-                    }
-                  },
-            icon: _isSending
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.send),
-            color: _isSending ? Colors.grey : Colors.blue.shade700,
-          ),
-        ],
-      ),
     );
   }
 }

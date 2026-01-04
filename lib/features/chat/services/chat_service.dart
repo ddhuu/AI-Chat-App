@@ -6,97 +6,96 @@ import 'package:ai_chat_assistant/data/services/api_service.dart';
 import 'package:dio/dio.dart';
 
 /// Chat Service
-/// Handles all chat-related API calls
 class ChatService {
   final ApiService _apiService;
 
   ChatService(this._apiService);
 
-  /// Create new thread chat (first message in conversation)
-  /// Uses sendMessage with empty messages array
-  /// Returns: { conversationId, message, remainingUsage }
+  /// Create new thread chat
   Future<Map<String, dynamic>> createNewThread({
     required String message,
     required String modelDisplayName,
+    List<Map<String, dynamic>>? conversationHistory,
+    List<String>? files,
   }) async {
     return sendMessage(
       message: message,
       modelDisplayName: modelDisplayName,
-      conversationHistory: [], // Empty = new thread
-      conversationId: null, // No ID = new thread
+      conversationHistory: conversationHistory ?? [],
+      conversationId: null,
+      files: files,
     );
   }
 
-  /// Send message (works for both new thread and existing conversation)
-  /// - Empty messages array + no conversationId = new thread
-  /// - Has conversationId = existing conversation
-  /// Returns: { conversationId, message, remainingUsage }
+  /// Send message
   Future<Map<String, dynamic>> sendMessage({
     required String message,
     required String modelDisplayName,
     required List<Map<String, dynamic>> conversationHistory,
     String? conversationId,
+    List<String>? files,
   }) async {
     try {
-      final modelId = AiModels.getModelId(modelDisplayName);
+      // 1. Map model display name to ID
+      String modelId = _mapDisplayNameToId(modelDisplayName);
 
-      final isNewThread = conversationId == null;
-      AppLogger.info(
-        isNewThread
-            ? 'Creating new thread with model: $modelDisplayName'
-            : 'Sending message to conversation: $conversationId',
-        tag: 'ChatService',
-      );
-      if (conversationHistory.isNotEmpty) {
-        AppLogger.warning(
-          'conversationHistory should be empty! Server tracks history by conversationId.',
-          tag: 'ChatService',
-        );
+      // 2. Prepare request body
+      final Map<String, dynamic> body = {
+        'content': message, // <--- SỬA LỖI TẠI ĐÂY (Đổi 'message' thành 'content')
+        'model': modelId,
+        'history': conversationHistory,
+        'stream': false,
+      };
+
+      if (conversationId != null) {
+        body['conversationId'] = conversationId;
       }
 
+      // Xử lý file (URL)
+      if (files != null && files.isNotEmpty) {
+        body['files'] = files;
+      }
+
+      // 3. Call API
+      // Sử dụng endpoint aiChatMessages (/api/v1/ai-chat/messages)
       final response = await _apiService.dio.post(
-        ApiConstants.sendMessage,
-        data: {
-          "content": message,
-          "metadata": {
-            "conversation": {
-              if (conversationId != null) "id": conversationId,
-              "messages": conversationHistory,
-            },
-          },
-          "assistant": {
-            "id": modelId,
-            "model": "dify",
-            "name": modelDisplayName,
-          },
-        },
-        options: Options(
-          headers: {HttpHeaders.contentTypeHeader: "application/json"},
-          extra: {'requireToken': true},
-        ),
+        ApiConstants.aiChatMessages,
+        data: body,
+        options: Options(extra: {'requireToken': true}),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.info(
-          isNewThread
-              ? 'New thread created successfully'
-              : 'Message sent successfully',
-          tag: 'ChatService',
-        );
-        return response.data;
+      // 4. Parse response
+      if (response.statusCode == 200) {
+        return {
+          'message': response.data['message'] ?? response.data['answer'] ?? '',
+          'conversationId': response.data['conversationId'],
+          'remainingUsage': response.data['remainingUsage'] ?? 0,
+        };
       } else {
-        throw Exception('Failed to send message: ${response.statusCode}');
+        throw Exception('Failed to send message: ${response.statusMessage}');
       }
     } catch (e) {
-      AppLogger.error('Failed to send message', tag: 'ChatService', error: e);
+      AppLogger.error('Error sending message', error: e);
       rethrow;
     }
   }
 
-  /// Get all conversations
-  /// Requires assistantId and assistantModel parameters
+  // Helper mapping model names
+  String _mapDisplayNameToId(String displayName) {
+    final map = {
+      'GPT-4o mini': 'gpt-4o-mini',
+      'GPT-4o': 'gpt-4o',
+      'Gemini 1.5 Flash': 'gemini-1.5-flash',
+      'Gemini 1.5 Pro': 'gemini-1.5-pro',
+      'Claude 3 Haiku': 'claude-3-haiku',
+      'Claude 3.5 Sonnet': 'claude-3.5-sonnet',
+    };
+    return map[displayName] ?? displayName.toLowerCase().replaceAll(' ', '-');
+  }
+
+  /// Get conversations list
   Future<List<dynamic>> getConversations({
-    String assistantId = 'gpt-4o-mini',
+    required String assistantId,
     String assistantModel = 'dify',
   }) async {
     try {
@@ -110,34 +109,24 @@ class ChatService {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        // Response might be array directly or wrapped in object
         if (response.data is List) {
           return response.data;
         } else if (response.data['items'] != null) {
           return response.data['items'];
-        } else if (response.data['conversations'] != null) {
-          return response.data['conversations'];
         }
         return [];
       }
-
       return [];
     } catch (e) {
-      AppLogger.error(
-        'Failed to get conversations',
-        tag: 'ChatService',
-        error: e,
-      );
       return [];
     }
   }
 
-  /// Get conversation history (messages)
-  /// Requires assistantModel parameter
+  /// Get conversation history
   Future<List<dynamic>> getConversationHistory(
-    String conversationId, {
-    String assistantModel = 'dify',
-  }) async {
+      String conversationId, {
+        String assistantModel = 'dify',
+      }) async {
     try {
       final url = ApiConstants.getConversationHistory.replaceAll(
         '{conversationId}',
@@ -151,7 +140,6 @@ class ChatService {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        // Response might be array directly or wrapped in object
         if (response.data is List) {
           return response.data;
         } else if (response.data['items'] != null) {
@@ -161,14 +149,8 @@ class ChatService {
         }
         return [];
       }
-
       return [];
     } catch (e) {
-      AppLogger.error(
-        'Failed to get conversation history',
-        tag: 'ChatService',
-        error: e,
-      );
       return [];
     }
   }

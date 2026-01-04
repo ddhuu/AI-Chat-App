@@ -4,50 +4,66 @@ class ChatInputBox extends StatelessWidget {
   final VoidCallback onSend;
   final VoidCallback onUpload;
 
-  // === THAM SỐ MỚI ===
   final String? attachedImagePath;
   final VoidCallback onRemoveImage;
-  // ===================
+  final TextEditingController controller;
 
   const ChatInputBox({
     super.key,
     required this.onSend,
     required this.onUpload,
-    // === YÊU CẦU THAM SỐ MỚI ===
     this.attachedImagePath,
     required this.onRemoveImage,
-    // ===========================
+    required this.controller,
   });
 
-  // Widget MỚI: Hiển thị hình ảnh đính kèm
   Widget _buildAttachedImage() {
     if (attachedImagePath == null) {
       return const SizedBox.shrink();
     }
 
+    bool isUrl = attachedImagePath!.startsWith('http');
+
     return Container(
-      margin: const EdgeInsets.only(left: 8, top: 8),
-      padding: const EdgeInsets.only(left: 4, right: 2, top: 4, bottom: 4),
+      margin: const EdgeInsets.only(left: 8, top: 8, bottom: 4),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-          color: Colors.blue.shade100,
+          color: Colors.blue.shade50,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.blue.shade700)
+          border: Border.all(color: Colors.blue.shade200)
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.photo, size: 20, color: Colors.black54),
-          const SizedBox(width: 4),
-          Text(
-            'Image attached ($attachedImagePath)', // Hiển thị tên mô phỏng
-            style: TextStyle(color: Colors.blue.shade900, fontSize: 13),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: isUrl
+                  ? Image.network(
+                attachedImagePath!,
+                fit: BoxFit.cover,
+                errorBuilder: (ctx, _, __) => const Icon(Icons.broken_image, size: 20),
+              )
+                  : const Icon(Icons.image, size: 24, color: Colors.blue),
+            ),
           ),
-          // Nút Xóa
-          GestureDetector(
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 150),
+            child: Text(
+              isUrl ? 'Image from URL' : 'Attached Image',
+              style: TextStyle(color: Colors.blue.shade900, fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 4),
+          InkWell(
             onTap: onRemoveImage,
             child: Padding(
-              padding: const EdgeInsets.only(left: 6, right: 4),
-              child: Icon(Icons.close, size: 16, color: Colors.blue.shade900),
+              padding: const EdgeInsets.all(4.0),
+              child: Icon(Icons.close, size: 18, color: Colors.blue.shade900),
             ),
           ),
         ],
@@ -57,51 +73,58 @@ class ChatInputBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Xác định nút Gửi có nên bật/tô màu xanh hay không (nếu có hình ảnh HOẶC text)
-    final bool isReadyToSend = attachedImagePath != null; // Cần thêm check text controller.
+    final bool isReadyToSend = attachedImagePath != null || controller.text.trim().isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.blue.shade800, width: 0.6),
-        borderRadius: BorderRadius.circular(12.0),
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(24.0),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start, // Để tag hình ảnh căn trái
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // === HIỂN THỊ HÌNH ẢNH ĐÍNH KÈM ===
           _buildAttachedImage(),
 
-          const TextField(
-            decoration: InputDecoration(
-              hintText: "Ask me anything, press '/' for prompts...",
-              hintStyle: TextStyle(fontSize: 14, color: Colors.blueGrey),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 16),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.fromLTRB(4, 2, 2, 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: onUpload,
-                  icon: const Icon(
-                    Icons.add_circle_outline,
-                    color: Colors.blueGrey,
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              IconButton(
+                onPressed: onUpload,
+                icon: const Icon(
+                  Icons.add_circle_outline,
+                  color: Colors.blueGrey,
                 ),
-                IconButton(
-                  onPressed: onSend,
-                  // Đổi màu để mô phỏng "sẵn sàng gửi" khi có hình ảnh đính kèm
-                  icon: Icon(
-                    Icons.send,
-                    color: isReadyToSend ? Colors.blue.shade700 : Colors.blueGrey,
+                padding: const EdgeInsets.only(bottom: 10, left: 4),
+              ),
+
+              // TextField
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    hintText: "Type a message... (use / for prompts)",
+                    hintStyle: TextStyle(fontSize: 14, color: Colors.blueGrey),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                   ),
+                  maxLines: 4,
+                  minLines: 1,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => isReadyToSend ? onSend() : null,
                 ),
-              ],
-            ),
+              ),
+              
+              IconButton(
+                onPressed: isReadyToSend ? onSend : null,
+                icon: Icon(
+                  Icons.send,
+                  color: isReadyToSend ? Colors.blue.shade700 : Colors.grey,
+                ),
+                padding: const EdgeInsets.only(bottom: 10, right: 4),
+              ),
+            ],
           ),
         ],
       ),
