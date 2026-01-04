@@ -4,6 +4,7 @@ import '../../core/constants/strings.dart';
 import '../../features/bot/pages/assistant_list_page.dart';
 import '../../features/chat/chat_page.dart';
 import '../../features/ai_action/pages/ai_action_page.dart';
+import '../../features/ai_agent/pages/ai_agent_page.dart';
 import '../../features/knowledge/pages/knowledge_list_page.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -118,6 +119,17 @@ class AppDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AIActionPage()),
+              );
+            },
+          ),
+          _DrawerMenuItem(
+            icon: Icons.psychology_outlined,
+            title: 'AI Agent',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AiAgentPage()),
               );
             },
           ),

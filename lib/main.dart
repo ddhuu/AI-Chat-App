@@ -6,6 +6,7 @@ import 'package:ai_chat_assistant/features/bot/services/assistant_service.dart';
 import 'package:ai_chat_assistant/features/knowledge/providers/knowledge_provider.dart';
 import 'package:ai_chat_assistant/features/prompt/providers/prompt_provider.dart';
 import 'package:ai_chat_assistant/features/prompt/services/prompt_api_service.dart';
+import 'package:ai_chat_assistant/features/ai_agent/providers/ai_agent_provider.dart';
 import 'package:ai_chat_assistant/shared/providers/auth_provider.dart';
 import 'package:ai_chat_assistant/shared/providers/token_usage_provider.dart';
 import 'package:ai_chat_assistant/shared/widgets/ad_manager.dart';
@@ -103,6 +104,11 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider<AssistantProvider>(
           create: (context) =>
               AssistantProvider(AssistantService(widget.apiService)),
+        ),
+
+        // Provide AiAgentProvider
+        ChangeNotifierProvider<AiAgentProvider>(
+          create: (context) => AiAgentProvider(),
         ),
       ],
       child: MaterialApp(
