@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/constants/colors.dart';
 import '../../providers/email_style_provider.dart';
 
@@ -42,9 +43,9 @@ class _EmailStyleSectionState extends State<EmailStyleSection> {
                         size: 20,
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Phong cách email',
-                        style: TextStyle(
+                      Text(
+                        'email.email_style'.tr(),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
@@ -71,26 +72,37 @@ class _EmailStyleSectionState extends State<EmailStyleSection> {
                             const Divider(),
                             const SizedBox(height: 12),
                             _buildStyleOption(
-                              'Độ dài',
+                              'email.length'.tr(),
                               provider.length,
                               ['short', 'medium', 'long'],
-                              ['Ngắn', 'Trung bình', 'Dài'],
+                              [
+                                'email.length_short'.tr(),
+                                'email.length_medium'.tr(),
+                                'email.length_long'.tr(),
+                              ],
                               provider.setLength,
                             ),
                             const SizedBox(height: 16),
                             _buildStyleOption(
-                              'Tính trang trọng',
+                              'email.formality'.tr(),
                               provider.formality,
                               ['casual', 'formal'],
-                              ['Thân mật', 'Trang trọng'],
+                              [
+                                'email.formality_casual'.tr(),
+                                'email.formality_formal'.tr(),
+                              ],
                               provider.setFormality,
                             ),
                             const SizedBox(height: 16),
                             _buildStyleOption(
-                              'Giọng điệu',
+                              'email.tone'.tr(),
                               provider.tone,
                               ['friendly', 'professional', 'enthusiastic'],
-                              ['Thân thiện', 'Chuyên nghiệp', 'Nhiệt tình'],
+                              [
+                                'email.tone_friendly'.tr(),
+                                'email.tone_professional'.tr(),
+                                'email.tone_enthusiastic'.tr(),
+                              ],
                               provider.setTone,
                             ),
                           ],

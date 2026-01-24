@@ -1,0 +1,63 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [ master, develop, advance-feature ]
+  pull_request:
+    branches: [ master, develop, advance-feature ]
+
+jobs:
+  # Single job: Build and Test
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+      
+      - name: Create .env file
+        run: |
+          echo "API_BASE_URL=https://api.jarvis.cx" >> .env
+          echo "AUTH_BASE_URL=https://auth-api.jarvis.cx" >> .env
+          echo "KNOWLEDGE_BASE_URL=https://knowledge-api.jarvis.cx" >> .env
+          echo "STACK_ACCESS_TYPE=client" >> .env
+          echo "STACK_PROJECT_ID=${{ secrets.STACK_PROJECT_ID }}" >> .env
+          echo "STACK_PUBLISHABLE_CLIENT_KEY=${{ secrets.STACK_PUBLISHABLE_CLIENT_KEY }}" >> .env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+          echo "APP_NAME=Jarvis AI Assistant" >> .env
+          echo "APP_VERSION=1.0.0" >> .env
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos
+        continue-on-error: true
+      
+      - name: Run tests
+        run: flutter test
+        continue-on-error: true
+      
+      - name: Build Android APK
+        run: flutter build apk --release
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7

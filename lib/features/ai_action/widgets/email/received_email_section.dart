@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/constants/colors.dart';
 
 class ReceivedEmailSection extends StatelessWidget {
@@ -11,9 +12,9 @@ class ReceivedEmailSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Email đã nhận',
-          style: TextStyle(
+        Text(
+          'email.received_email'.tr(),
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -26,7 +27,7 @@ class ReceivedEmailSection extends StatelessWidget {
           minLines: 5,
           style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
-            hintText: 'Dán email bạn đã nhận vào đây...',
+            hintText: 'email.received_email_placeholder'.tr(),
             hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
             filled: true,
             fillColor: AppColors.surface,

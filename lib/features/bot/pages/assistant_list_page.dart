@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/colors.dart';
-import '../../../core/constants/strings.dart';
 import '../../../shared/widgets/AppDrawer.dart';
 import '../../../shared/providers/token_usage_provider.dart';
 import '../models/assistant_model.dart';
@@ -99,7 +99,7 @@ class _AssistantListPageState extends State<AssistantListPage> {
       );
 
       if (success && mounted) {
-        _showSuccessSnackBar(AppStrings.botCreated);
+        _showSuccessSnackBar('bot.created'.tr());
       } else if (mounted) {
         _showErrorSnackBar(
           provider.errorMessage ?? 'Failed to create assistant',
@@ -144,19 +144,19 @@ class _AssistantListPageState extends State<AssistantListPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text(AppStrings.confirmDelete),
+        title: Text('bot.confirm_delete'.tr()),
         content: Text(
           'Are you sure you want to delete "${assistant.assistantName}"?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(AppStrings.cancel),
+            child: Text('common.cancel'.tr()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text(AppStrings.deleteBot),
+            child: Text('bot.delete'.tr()),
           ),
         ],
       ),
@@ -167,7 +167,7 @@ class _AssistantListPageState extends State<AssistantListPage> {
       final success = await provider.deleteAssistant(assistant.id);
 
       if (success && mounted) {
-        _showSuccessSnackBar(AppStrings.botDeleted);
+        _showSuccessSnackBar('bot.deleted'.tr());
       } else if (mounted) {
         _showErrorSnackBar(
           provider.errorMessage ?? 'Failed to delete assistant',
@@ -204,8 +204,8 @@ class _AssistantListPageState extends State<AssistantListPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          AppStrings.myBots,
+        title: Text(
+          'bot.my_bots'.tr(),
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         // actions: [
@@ -303,8 +303,8 @@ class _AssistantListPageState extends State<AssistantListPage> {
         children: [
           Icon(Icons.smart_toy_outlined, size: 80, color: AppColors.textHint),
           const SizedBox(height: 24),
-          const Text(
-            AppStrings.noBots,
+          Text(
+            'bot.no_bots'.tr(),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -312,15 +312,15 @@ class _AssistantListPageState extends State<AssistantListPage> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            AppStrings.createFirstBot,
+          Text(
+            'bot.create_first_bot'.tr(),
             style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: _showCreateDialog,
             icon: const Icon(Icons.add),
-            label: const Text(AppStrings.createBot),
+            label: Text('bot.create_bot'.tr()),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,

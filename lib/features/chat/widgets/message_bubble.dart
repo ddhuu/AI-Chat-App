@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/colors.dart';
@@ -5,8 +6,14 @@ import '../../../core/constants/colors.dart';
 class MessageBubble extends StatefulWidget {
   final String message;
   final bool isUser;
+  final String? imageUrl;
 
-  const MessageBubble({super.key, required this.message, required this.isUser});
+  const MessageBubble({
+    super.key,
+    required this.message,
+    required this.isUser,
+    this.imageUrl,
+  });
 
   @override
   State<MessageBubble> createState() => _MessageBubbleState();
@@ -65,11 +72,24 @@ class _MessageBubbleState extends State<MessageBubble> {
                         : Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(
-                    widget.message,
-                    style: TextStyle(
-                      color: widget.isUser ? Colors.white : Colors.black87,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.imageUrl != null) ...[
+                        _buildMessageImage(),
+                        if (widget.message.isNotEmpty)
+                          const SizedBox(height: 8),
+                      ],
+                      if (widget.message.isNotEmpty)
+                        Text(
+                          widget.message,
+                          style: TextStyle(
+                            color: widget.isUser
+                                ? Colors.white
+                                : Colors.black87,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -145,12 +165,57 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   Widget _buildAvatar(bool isUser) {
     return CircleAvatar(
-      radius: 16,
-      backgroundColor: AppColors.primary,
+      radius: 20,
+      backgroundColor: isUser ? AppColors.primary : Colors.grey.shade300,
       child: Icon(
         isUser ? Icons.person : Icons.smart_toy,
-        color: Colors.white,
-        size: 16,
+        color: isUser ? Colors.white : AppColors.primary,
+        size: 20,
+      ),
+    );
+  }
+
+  Widget _buildMessageImage() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 200, maxHeight: 200),
+        child: widget.imageUrl!.startsWith('http')
+            ? Image.network(
+                widget.imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 200,
+                    height: 100,
+                    color: Colors.grey.shade300,
+                    child: const Icon(Icons.broken_image, size: 40),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    width: 200,
+                    height: 100,
+                    color: Colors.grey.shade300,
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                },
+              )
+            : Image.file(
+                File(widget.imageUrl!),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 200,
+                    height: 100,
+                    color: Colors.grey.shade300,
+                    child: const Icon(Icons.broken_image, size: 40),
+                  );
+                },
+              ),
       ),
     );
   }

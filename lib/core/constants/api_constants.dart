@@ -1,14 +1,16 @@
-class ApiConstants {
-  // Base URLs
-  static const String baseUrl = "https://api.jarvis.cx";
-  static const String authBaseUrl = "https://auth-api.jarvis.cx";
-  static const String knowledgeBaseUrl = "https://knowledge-api.jarvis.cx";
+import '../config/env_config.dart';
 
-  // Stack Auth Headers
-  static const String stackAccessType = "client";
-  static const String stackProjectId = "45a1e2fd-77ee-4872-9fb7-987b8c119633";
-  static const String stackPublishableClientKey =
-      "pck_7wjweasxxnfspvr20dvmyd9pjj0p9kp755bxxcm4ae1er";
+class ApiConstants {
+  // Base URLs - from environment
+  static String get baseUrl => EnvConfig.apiBaseUrl;
+  static String get authBaseUrl => EnvConfig.authBaseUrl;
+  static String get knowledgeBaseUrl => EnvConfig.knowledgeBaseUrl;
+
+  // Stack Auth Headers - from environment
+  static String get stackAccessType => EnvConfig.stackAccessType;
+  static String get stackProjectId => EnvConfig.stackProjectId;
+  static String get stackPublishableClientKey =>
+      EnvConfig.stackPublishableClientKey;
 
   // Auth Endpoints
   static const String login = "/api/v1/auth/password/sign-in";
@@ -64,4 +66,7 @@ class ApiConstants {
   // AI Email Endpoints
   static const String aiEmailReply = "/api/v1/ai-email";
   static const String aiEmailSuggestIdeas = "/api/v1/ai-email/reply-ideas";
+
+  // Image Upload for Vision AI
+  static const String uploadImageForVision = "/api/v1/ai-chat/upload-image";
 }
