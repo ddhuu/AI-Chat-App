@@ -1,10 +1,12 @@
 import 'package:ai_chat_assistant/data/services/api_service.dart';
 import 'package:ai_chat_assistant/features/chat/services/chat_service.dart';
 import 'package:ai_chat_assistant/features/bot/services/bot_chat_service.dart';
+import 'package:ai_chat_assistant/features/chat/services/gemini_service.dart';
 import 'package:ai_chat_assistant/shared/providers/token_usage_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../core/constants/colors.dart';
 import '../../shared/widgets/AppDrawer.dart';
 import '../../shared/widgets/profile_drawer.dart';
@@ -22,6 +24,7 @@ import 'widgets/chat_history.dart';
 import 'widgets/chat_input.dart';
 import '../prompt/pages/prompt_library_bottom_sheet.dart';
 import '../prompt/widgets/prompt_suggestion_overlay.dart';
+import 'widgets/image_attachment_bottom_sheet.dart';
 
 class ChatPage extends StatefulWidget {
   final Assistant? initialBot;
@@ -40,6 +43,7 @@ class _ChatPageState extends State<ChatPage> {
 
   late ChatService _chatService;
   late BotChatService _botChatService;
+  late GeminiService _geminiService;
   String? _conversationId;
   final List<Map<String, dynamic>> _conversationHistory = [];
   bool _isSending = false;
@@ -56,6 +60,7 @@ class _ChatPageState extends State<ChatPage> {
     final apiService = context.read<ApiService>();
     _chatService = ChatService(apiService);
     _botChatService = BotChatService(apiService);
+    _geminiService = GeminiService();
 
     if (widget.initialBot != null) {
       selectedModelId = widget.initialBot!.id;
@@ -63,16 +68,13 @@ class _ChatPageState extends State<ChatPage> {
       _mockMessages.add(
         MessageBubble(
           message:
-              "Hi! I'm ${widget.initialBot!.assistantName}. ${widget.initialBot!.description ?? 'How can I help you today?'}",
+              "Hi! I'm ${widget.initialBot!.assistantName}. ${widget.initialBot!.description ?? 'chat.hello_message'.tr()}",
           isUser: false,
         ),
       );
     } else {
       _mockMessages.add(
-        const MessageBubble(
-          message: "Hello! How can I help you today?",
-          isUser: false,
-        ),
+        MessageBubble(message: 'chat.hello_message'.tr(), isUser: false),
       );
     }
 
@@ -110,49 +112,17 @@ class _ChatPageState extends State<ChatPage> {
     return selectedModelId;
   }
 
-  Future<void> _showUrlInputDialog() async {
-    final urlController = TextEditingController();
-
-    await showDialog(
+  Future<void> _showImageAttachmentOptions() async {
+    await showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Attach Image Link'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Paste the direct link to the image:',
-              style: TextStyle(fontSize: 13, color: Colors.grey),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: urlController,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'https://example.com/image.jpg',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.link),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (urlController.text.trim().isNotEmpty) {
-                setState(() {
-                  _attachedImageUrl = urlController.text.trim();
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Attach'),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ImageAttachmentBottomSheet(
+        onImageSelected: (imageUrl) {
+          setState(() {
+            _attachedImageUrl = imageUrl;
+          });
+        },
       ),
     );
   }
@@ -193,10 +163,7 @@ class _ChatPageState extends State<ChatPage> {
       isEmpty = true;
       _mockMessages.clear();
       _mockMessages.add(
-        const MessageBubble(
-          message: "Hello! How can I help you today?",
-          isUser: false,
-        ),
+        MessageBubble(message: 'chat.hello_message'.tr(), isUser: false),
       );
       _conversationId = null;
       _conversationHistory.clear();
@@ -215,30 +182,49 @@ class _ChatPageState extends State<ChatPage> {
 
       String displayMsg = userMessage;
       if (_attachedImageUrl != null) {
-        if (displayMsg.isEmpty)
-          displayMsg = "[Sent an image]";
-        else
-          displayMsg += "\n[Image Attached]";
+        if (displayMsg.isEmpty) displayMsg = 'chat.sent_image'.tr();
       }
 
-      _mockMessages.add(MessageBubble(message: displayMsg, isUser: true));
+      _mockMessages.add(
+        MessageBubble(
+          message: displayMsg,
+          isUser: true,
+          imageUrl: _attachedImageUrl,
+        ),
+      );
 
       // Add typing indicator as a placeholder
       _mockMessages.add(
-        Container(
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          child: const TypingIndicator(),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.grey.shade300,
+                child: Icon(
+                  Icons.smart_toy,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const TypingIndicator(),
+            ],
+          ),
         ),
       );
     });
 
     try {
-      List<String>? files;
+      // Check if image is attached - use Gemini for image chat
       if (_attachedImageUrl != null) {
-        files = [_attachedImageUrl!];
+        await _handleImageChatWithGemini(userMessage);
+        return;
       }
 
+      List<String>? files;
       Map<String, dynamic> response;
 
       // Use BotChatService for bot conversations
@@ -308,6 +294,61 @@ class _ChatPageState extends State<ChatPage> {
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
         setState(() {
           if (_mockMessages.isNotEmpty) _mockMessages.removeLast();
+        });
+      }
+    } finally {
+      setState(() {
+        _isSending = false;
+      });
+    }
+  }
+
+  Future<void> _handleImageChatWithGemini(String userMessage) async {
+    try {
+      String aiResponse;
+
+      // Check if image is URL or local file
+      if (_attachedImageUrl!.startsWith('http')) {
+        // Image URL - use Gemini vision with URL
+        aiResponse = await _geminiService.chatWithImageUrl(
+          message: userMessage.isEmpty ? 'What is in this image?' : userMessage,
+          imageUrl: _attachedImageUrl!,
+        );
+      } else {
+        // Local file path - use Gemini vision with file
+        aiResponse = await _geminiService.chatWithImage(
+          message: userMessage.isEmpty ? 'What is in this image?' : userMessage,
+          imagePath: _attachedImageUrl!,
+        );
+      }
+
+      _conversationHistory.add({"role": "user", "content": userMessage});
+      _conversationHistory.add({"role": "model", "content": aiResponse});
+
+      setState(() {
+        // Remove typing indicator
+        if (_mockMessages.isNotEmpty) {
+          _mockMessages.removeLast();
+        }
+        // Add AI response
+        _mockMessages.add(MessageBubble(message: aiResponse, isUser: false));
+        _attachedImageUrl = null;
+      });
+
+      if (mounted) context.read<TokenUsageProvider>().getUsage();
+      if (mounted) AdManager.of(context)?.showInterstitialAd();
+    } catch (e) {
+      print('Error in Gemini image chat: $e');
+      if (mounted) {
+        setState(() {
+          if (_mockMessages.isNotEmpty) _mockMessages.removeLast();
+          _mockMessages.add(
+            MessageBubble(
+              message: '${'chat.error_analyzing_image'.tr()}: ${e.toString()}',
+              isUser: false,
+            ),
+          );
+          _attachedImageUrl = null;
         });
       }
     } finally {
@@ -423,7 +464,7 @@ class _ChatPageState extends State<ChatPage> {
             child: Row(
               children: [
                 Text(
-                  'Upgrade',
+                  'pricing.upgrade'.tr(),
                   style: TextStyle(
                     color: Colors.blue.shade700,
                     fontWeight: FontWeight.bold,
@@ -545,7 +586,7 @@ class _ChatPageState extends State<ChatPage> {
               _chatInputController.clear();
             }
           },
-          onUpload: _showUrlInputDialog,
+          onUpload: _showImageAttachmentOptions,
           attachedImagePath: _attachedImageUrl,
           onRemoveImage: _handleImageRemove,
         ),
