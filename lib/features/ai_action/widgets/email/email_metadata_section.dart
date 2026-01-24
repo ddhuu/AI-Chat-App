@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/constants/colors.dart';
 
 class EmailMetadataSection extends StatefulWidget {
@@ -47,10 +48,10 @@ class _EmailMetadataSectionState extends State<EmailMetadataSection> {
                     size: 20,
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Thông tin email (tùy chọn)',
-                      style: TextStyle(
+                      'email.email_metadata'.tr(),
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
@@ -78,27 +79,27 @@ class _EmailMetadataSectionState extends State<EmailMetadataSection> {
                         const SizedBox(height: 12),
                         _buildTextField(
                           controller: widget.subjectController,
-                          label: 'Tiêu đề',
-                          hint: 'VD: Re: Thông báo họp',
+                          label: 'email.subject'.tr(),
+                          hint: 'email.subject_placeholder'.tr(),
                           icon: Icons.subject,
                         ),
                         const SizedBox(height: 12),
                         _buildTextField(
                           controller: widget.senderController,
-                          label: 'Người gửi',
-                          hint: 'VD: Nguyễn Văn A',
+                          label: 'email.sender'.tr(),
+                          hint: 'email.sender_placeholder'.tr(),
                           icon: Icons.person_outline,
                         ),
                         const SizedBox(height: 12),
                         _buildTextField(
                           controller: widget.receiverController,
-                          label: 'Người nhận',
-                          hint: 'VD: Phòng nhân sự',
+                          label: 'email.receiver'.tr(),
+                          hint: 'email.receiver_placeholder'.tr(),
                           icon: Icons.email_outlined,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '💡 Tip: Thông tin này giúp AI tạo email chính xác hơn',
+                          'email.email_metadata_tip'.tr(),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade600,

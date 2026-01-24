@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/services/api_service.dart';
 import '../../knowledge/models/knowledge_model.dart';
@@ -90,8 +91,8 @@ class _CreateBotPageState extends State<CreateBotPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Create bot',
+        title: Text(
+          'bot.create_bot'.tr(),
           style: TextStyle(
             color: Colors.black87,
             fontSize: 18,
@@ -197,14 +198,14 @@ class _CreateBotPageState extends State<CreateBotPage> {
           TextFormField(
             controller: _nameController,
             decoration: InputDecoration(
-              hintText: 'Bot name',
+              hintText: 'bot.bot_name'.tr(),
               hintStyle: TextStyle(color: Colors.grey.shade400),
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Please enter bot name';
+                return 'bot.name_required'.tr();
               }
               return null;
             },
@@ -263,8 +264,8 @@ class _CreateBotPageState extends State<CreateBotPage> {
       ),
       child: ListTile(
         leading: const Icon(Icons.psychology_outlined, color: Colors.black87),
-        title: const Text(
-          'Models',
+        title: Text(
+          'bot.models'.tr(),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -312,8 +313,8 @@ class _CreateBotPageState extends State<CreateBotPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Bot description',
+          Text(
+            'bot.description'.tr(),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -347,8 +348,8 @@ class _CreateBotPageState extends State<CreateBotPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Knowledge base',
+          Text(
+            'bot.knowledge_base'.tr(),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -430,14 +431,14 @@ class _CreateBotPageState extends State<CreateBotPage> {
                 border: Border.all(color: AppColors.primary, width: 1.5),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add, color: AppColors.primary, size: 18),
-                  SizedBox(width: 8),
+                  const Icon(Icons.add, color: AppColors.primary, size: 18),
+                  const SizedBox(width: 8),
                   Text(
-                    'Add knowledge source',
-                    style: TextStyle(
+                    'bot.add_knowledge'.tr(),
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -468,8 +469,8 @@ class _CreateBotPageState extends State<CreateBotPage> {
             ),
             elevation: 0,
           ),
-          child: const Text(
-            'Create bot',
+          child: Text(
+            'bot.create_bot'.tr(),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/constants/colors.dart';
 import '../../providers/email_provider.dart';
 
@@ -18,8 +19,8 @@ class SuggestIdeasSection extends StatelessWidget {
 
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng nhập email đã nhận trước'),
+        SnackBar(
+          content: Text('email.please_enter_received_email'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -34,7 +35,7 @@ class SuggestIdeasSection extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi: ${e.toString()}'),
+            content: Text('${'common.error'.tr()}: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -54,9 +55,9 @@ class SuggestIdeasSection extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Gợi ý ý tưởng',
-                  style: TextStyle(
+                Text(
+                  'email.suggest_ideas'.tr(),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
@@ -74,7 +75,9 @@ class SuggestIdeasSection extends StatelessWidget {
                         )
                       : const Icon(Icons.lightbulb_outline, size: 18),
                   label: Text(
-                    provider.isLoadingSuggestions ? 'Đang tải...' : 'Lấy gợi ý',
+                    provider.isLoadingSuggestions
+                        ? 'email.loading_suggestions'.tr()
+                        : 'email.get_suggestions'.tr(),
                   ),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.primary,

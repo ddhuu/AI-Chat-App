@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../core/constants/colors.dart';
 import '../../shared/providers/token_usage_provider.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../features/auth/pages/auth_page.dart';
+import 'language_dialog.dart';
 
 class ProfileDrawer extends StatelessWidget {
   const ProfileDrawer({super.key});
@@ -45,34 +47,34 @@ class ProfileDrawer extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
-                  _buildSectionHeader('Chung'),
+                  _buildSectionHeader('profile.general'.tr()),
                   const SizedBox(height: 8),
                   _buildMenuItem(
                     icon: Icons.chat_bubble_outline,
-                    title: 'Cài đặt trò chuyện',
+                    title: 'profile.chat_settings'.tr(),
                     onTap: () {
                       // TODO: Navigate to chat settings
                     },
                   ),
                   _buildMenuItem(
                     icon: Icons.palette_outlined,
-                    title: 'Chế độ trang chủ',
-                    trailing: 'Đơn giản',
+                    title: 'profile.home_mode'.tr(),
+                    trailing: 'profile.simple_mode'.tr(),
                     onTap: () {
                       // TODO: Navigate to theme settings
                     },
                   ),
                   _buildMenuItem(
                     icon: Icons.dark_mode_outlined,
-                    title: 'Chế độ màu sắc',
-                    trailing: 'System',
+                    title: 'profile.color_mode'.tr(),
+                    trailing: 'profile.system_mode'.tr(),
                     onTap: () {
                       // TODO: Navigate to dark mode settings
                     },
                   ),
                   _buildMenuItem(
                     icon: Icons.volume_up_outlined,
-                    title: 'Giọng nói',
+                    title: 'profile.voice'.tr(),
                     trailing: 'Nova',
                     onTap: () {
                       // TODO: Navigate to voice settings
@@ -80,27 +82,27 @@ class ProfileDrawer extends StatelessWidget {
                   ),
                   _buildMenuItem(
                     icon: Icons.language_outlined,
-                    title: 'Ngôn ngữ',
-                    trailing: 'Tiếng Việt',
-                    onTap: () {
-                      // TODO: Navigate to language settings
-                    },
+                    title: 'profile.language'.tr(),
+                    trailing: context.locale == const Locale('vi')
+                        ? 'profile.vietnamese'.tr()
+                        : 'profile.english'.tr(),
+                    onTap: () => showLanguageDialog(context),
                   ),
 
                   const SizedBox(height: 24),
-                  _buildSectionHeader('Khác'),
+                  _buildSectionHeader('profile.other'.tr()),
                   const SizedBox(height: 8),
 
                   _buildMenuItem(
                     icon: Icons.card_giftcard_outlined,
-                    title: 'Mời bạn bè',
+                    title: 'profile.invite_friends'.tr(),
                     onTap: () {
                       // TODO: Navigate to referral
                     },
                   ),
                   _buildMenuItem(
                     icon: Icons.apps_outlined,
-                    title: 'Ứng dụng',
+                    title: 'profile.apps'.tr(),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -129,7 +131,7 @@ class ProfileDrawer extends StatelessWidget {
                   ),
                   _buildMenuItem(
                     icon: Icons.help_outline,
-                    title: 'Bộ nhớ',
+                    title: 'profile.memory'.tr(),
                     trailing: Container(
                       width: 8,
                       height: 8,
@@ -230,7 +232,7 @@ class ProfileDrawer extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isPro ? 'Pro' : 'Miễn phí',
+                isPro ? 'profile.pro_plan'.tr() : 'profile.free_plan'.tr(),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -246,8 +248,8 @@ class ProfileDrawer extends StatelessWidget {
                     color: Colors.black,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'Nâng cấp',
+                  child: Text(
+                    'profile.upgrade'.tr(),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -262,13 +264,15 @@ class ProfileDrawer extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Truy vấn',
+                'profile.queries'.tr(),
                 style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
               Row(
                 children: [
                   Text(
-                    isPro ? 'VÔ HẠN' : '$remainingTokens/$totalTokens',
+                    isPro
+                        ? 'profile.unlimited'.tr()
+                        : '$remainingTokens/$totalTokens',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -348,17 +352,17 @@ class ProfileDrawer extends StatelessWidget {
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Đăng xuất'),
-            content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
+            title: Text('auth.logout'.tr()),
+            content: Text('auth.logout_confirm'.tr()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Hủy'),
+                child: Text('common.cancel'.tr()),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Đăng xuất'),
+                child: Text('auth.logout'.tr()),
               ),
             ],
           ),
@@ -376,10 +380,10 @@ class ProfileDrawer extends StatelessWidget {
 
         // Show loading
         messenger.showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
@@ -387,11 +391,11 @@ class ProfileDrawer extends StatelessWidget {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 ),
-                SizedBox(width: 16),
-                Text('Đang đăng xuất...'),
+                const SizedBox(width: 16),
+                Text('auth.logging_out'.tr()),
               ],
             ),
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
 
@@ -404,8 +408,8 @@ class ProfileDrawer extends StatelessWidget {
         if (result == 'success') {
           // Show success message
           messenger.showSnackBar(
-            const SnackBar(
-              content: Text('Đăng xuất thành công'),
+            SnackBar(
+              content: Text('auth.logout_success'.tr()),
               backgroundColor: AppColors.success,
               duration: Duration(milliseconds: 800),
             ),
@@ -437,7 +441,7 @@ class ProfileDrawer extends StatelessWidget {
             Icon(Icons.logout_outlined, size: 22, color: Colors.red.shade600),
             const SizedBox(width: 12),
             Text(
-              'Đăng xuất',
+              'auth.logout'.tr(),
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
