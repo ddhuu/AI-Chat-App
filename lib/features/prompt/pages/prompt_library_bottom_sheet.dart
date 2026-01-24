@@ -306,18 +306,21 @@ class _PromptLibraryBottomSheetState extends State<PromptLibraryBottomSheet> {
                               .map(
                                 (category) => ChoiceChip(
                                   label: Text(category),
-                                  selected: _selectedCategory == category,
+                                  selected:
+                                      _selectedCategory.toLowerCase() ==
+                                      category.toLowerCase(),
                                   onSelected: (selected) {
                                     setState(() {
-                                      _selectedCategory = category
-                                          .toLowerCase();
+                                      _selectedCategory = category;
                                       _loadData(isRefresh: true);
                                     });
                                   },
                                   selectedColor: AppColors.primary,
                                   backgroundColor: AppColors.surface,
                                   labelStyle: TextStyle(
-                                    color: _selectedCategory == category
+                                    color:
+                                        _selectedCategory.toLowerCase() ==
+                                            category.toLowerCase()
                                         ? Colors.white
                                         : AppColors.textPrimary,
                                     fontSize: 13,

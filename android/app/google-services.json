@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "953900555303",
+    "project_id": "ai-chat-assistant-ace7e",
+    "storage_bucket": "ai-chat-assistant-ace7e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:953900555303:android:8b668bcf66843c46ab8202",
+        "android_client_info": {
+          "package_name": "com.example.ai_chat_assistant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdHhe-KUXBVc1llWUIuITvC4NofKVR5uk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

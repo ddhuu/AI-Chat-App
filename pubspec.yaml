@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.9.2
+  sdk: '>=3.5.0 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -44,14 +44,27 @@ dependencies:
   provider: ^6.1.1
   fluttertoast: ^8.2.4
   event_bus: ^2.0.0
-  file_picker: ^10.3.8
-  http_parser: ^4.1.2
+  file_picker: ^6.2.1
+  http_parser: ^4.0.2
   desktop_drop: ^0.7.0
-  cross_file: ^0.3.5+1
+  cross_file: ^0.3.4+2
   url_launcher: ^6.2.5
   google_sign_in: ^6.2.1
   googleapis: ^13.1.0
   extension_google_sign_in_as_googleapis_auth: ^2.0.12
+  
+  # Localization
+  easy_localization: ^3.0.7
+  shared_preferences: ^2.2.2
+  
+  # Environment variables
+  flutter_dotenv: ^5.1.0
+  
+  # Image handling
+  image_picker: ^1.0.7
+  
+  # Google Gemini AI
+  google_generative_ai: ^0.2.0
 
 dev_dependencies:
   flutter_test:
@@ -79,6 +92,8 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    - assets/translations/
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

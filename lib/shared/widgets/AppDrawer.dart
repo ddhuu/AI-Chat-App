@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../core/constants/colors.dart';
-import '../../core/constants/strings.dart';
 import '../../features/bot/pages/assistant_list_page.dart';
 import '../../features/chat/chat_page.dart';
 import '../../features/ai_action/pages/ai_action_page.dart';
@@ -41,8 +41,8 @@ class AppDrawer extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Text(
-                      AppStrings.appName,
+                    Text(
+                      'common.app_name'.tr(),
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -63,7 +63,7 @@ class AppDrawer extends StatelessWidget {
           // Menu Items
           _DrawerMenuItem(
             icon: Icons.home_outlined,
-            title: AppStrings.home,
+            title: 'navigation.home'.tr(),
             onTap: () {
               Navigator.pop(context);
               Navigator.pushAndRemoveUntil(
@@ -75,7 +75,7 @@ class AppDrawer extends StatelessWidget {
           ),
           _DrawerMenuItem(
             icon: Icons.chat_bubble_outline,
-            title: AppStrings.chat,
+            title: 'navigation.chat'.tr(),
             onTap: () {
               Navigator.pop(context);
               Navigator.pushAndRemoveUntil(
@@ -87,7 +87,7 @@ class AppDrawer extends StatelessWidget {
           ),
           _DrawerMenuItem(
             icon: Icons.smart_toy_outlined,
-            title: AppStrings.bot,
+            title: 'navigation.bot'.tr(),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -100,7 +100,7 @@ class AppDrawer extends StatelessWidget {
           ),
           _DrawerMenuItem(
             icon: Icons.library_books_outlined,
-            title: AppStrings.knowledge,
+            title: 'navigation.knowledge'.tr(),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -113,7 +113,7 @@ class AppDrawer extends StatelessWidget {
           ),
           _DrawerMenuItem(
             icon: Icons.explore_outlined,
-            title: AppStrings.aiAction,
+            title: 'navigation.ai_action'.tr(),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -124,7 +124,7 @@ class AppDrawer extends StatelessWidget {
           ),
           _DrawerMenuItem(
             icon: Icons.psychology_outlined,
-            title: 'AI Agent',
+            title: 'navigation.ai_agent'.tr(),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../main.dart'; // Để truy cập MyApp và setIsProUser
 import '../../../core/constants/colors.dart'; // Sử dụng AppColors
+import '../../shared/providers/token_usage_provider.dart';
 
 class PricingPage extends StatefulWidget {
   const PricingPage({super.key});
@@ -10,7 +12,6 @@ class PricingPage extends StatefulWidget {
 }
 
 class _PricingPageState extends State<PricingPage> {
-
   // === LOGIC QUẢN LÝ TRẠNG THÁI (GIỮ NGUYÊN) ===
   bool _isPro = false;
   int _currentTokens = 50;
@@ -30,15 +31,22 @@ class _PricingPageState extends State<PricingPage> {
       _currentTokens = 999999;
     });
 
-    // 2. CẬP NHẬT TRẠNG THÁI TOÀN CỤC (LOGIC CŨ)
+    // 2. Cập nhật MyApp state
     MyApp.of(context).setIsProUser(true);
 
+    // 3. Cập nhật TokenUsageProvider - sync user plan
+    final tokenProvider = context.read<TokenUsageProvider>();
+    final updatedUser = tokenProvider.currentUser.copyWith(plan: 'pro');
+    tokenProvider.setCurrentUser(updatedUser);
+    tokenProvider.setTotalTokens(999999);
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Nâng cấp thành công! Chào mừng đến với Jarvis Pro!')),
+      const SnackBar(
+        content: Text('Nâng cấp thành công! Chào mừng đến với Jarvis Pro!'),
+      ),
     );
   }
   // ==============================================
-
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +68,7 @@ class _PricingPageState extends State<PricingPage> {
           padding: const EdgeInsets.all(24),
           children: [
             // Header
-            const Icon(
-              Icons.rocket_launch,
-              size: 64,
-              color: AppColors.primary,
-            ),
+            const Icon(Icons.rocket_launch, size: 64, color: AppColors.primary),
             const SizedBox(height: 16),
             const Text(
               'Nâng cấp lên Pro',
@@ -78,10 +82,7 @@ class _PricingPageState extends State<PricingPage> {
             const SizedBox(height: 8),
             const Text(
               'Mở khóa toàn bộ tính năng và trải nghiệm AI tốt nhất',
-              style: TextStyle(
-                fontSize: 15,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -193,9 +194,7 @@ class _PricingPageState extends State<PricingPage> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isRecommended
-                  ? AppColors.primary
-                  : Colors.transparent,
+              color: isRecommended ? AppColors.primary : Colors.transparent,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -297,30 +296,32 @@ class _PricingPageState extends State<PricingPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ...features.map((feature) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        size: 20,
-                        color: isRecommended
-                            ? AppColors.primary
-                            : AppColors.success,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          feature,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textPrimary,
+                ...features.map(
+                  (feature) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          size: 20,
+                          color: isRecommended
+                              ? AppColors.primary
+                              : AppColors.success,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            feature,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                )),
+                ),
                 const SizedBox(height: 8),
 
                 // Button
@@ -345,8 +346,9 @@ class _PricingPageState extends State<PricingPage> {
                         ),
                       ),
                       elevation: 0,
-                      disabledBackgroundColor:
-                      AppColors.textHint.withOpacity(0.1),
+                      disabledBackgroundColor: AppColors.textHint.withOpacity(
+                        0.1,
+                      ),
                     ),
                     child: Text(
                       isCurrentPlan
@@ -357,7 +359,9 @@ class _PricingPageState extends State<PricingPage> {
                         fontWeight: FontWeight.w600,
                         color: isCurrentPlan
                             ? AppColors.textHint
-                            : (isRecommended ? Colors.white : AppColors.primary),
+                            : (isRecommended
+                                  ? Colors.white
+                                  : AppColors.primary),
                       ),
                     ),
                   ),
@@ -380,7 +384,13 @@ class _PricingPageState extends State<PricingPage> {
       ),
       child: Column(
         children: [
-          _buildComparisonRow('Tính năng', 'Free', 'Pro', 'Enterprise', isHeader: true),
+          _buildComparisonRow(
+            'Tính năng',
+            'Free',
+            'Pro',
+            'Enterprise',
+            isHeader: true,
+          ),
           _buildComparisonRow('AI Models', 'GPT-3.5', 'Tất cả', 'Custom'),
           _buildComparisonRow('Tin nhắn/ngày', '50', '∞', '∞'),
           _buildComparisonRow('AI Bots', '2', '∞', '∞'),
@@ -395,19 +405,17 @@ class _PricingPageState extends State<PricingPage> {
 
   // Phương thức build từng hàng trong bảng so sánh (GIỮ NGUYÊN)
   Widget _buildComparisonRow(
-      String feature,
-      String free,
-      String pro,
-      String enterprise, {
-        bool isHeader = false,
-      }) {
+    String feature,
+    String free,
+    String pro,
+    String enterprise, {
+    bool isHeader = false,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: AppColors.divider.withOpacity(0.5),
-          ),
+          bottom: BorderSide(color: AppColors.divider.withOpacity(0.5)),
         ),
         color: isHeader ? AppColors.background : null,
       ),
@@ -430,7 +438,9 @@ class _PricingPageState extends State<PricingPage> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-                color: isHeader ? AppColors.textPrimary : AppColors.textSecondary,
+                color: isHeader
+                    ? AppColors.textPrimary
+                    : AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -452,7 +462,9 @@ class _PricingPageState extends State<PricingPage> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-                color: isHeader ? AppColors.textPrimary : AppColors.textSecondary,
+                color: isHeader
+                    ? AppColors.textPrimary
+                    : AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -467,17 +479,12 @@ class _PricingPageState extends State<PricingPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(Icons.rocket_launch, color: AppColors.primary),
             SizedBox(width: 12),
-            Text(
-              'Nâng cấp lên Pro',
-              style: TextStyle(fontSize: 20),
-            ),
+            Text('Nâng cấp lên Pro', style: TextStyle(fontSize: 20)),
           ],
         ),
         content: Column(
@@ -486,10 +493,7 @@ class _PricingPageState extends State<PricingPage> {
           children: [
             const Text(
               'Chọn phương thức thanh toán:',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 16),
             _buildPaymentOption(
