@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/services/api_service.dart';
 import '../models/assistant_model.dart';
@@ -172,8 +173,8 @@ class _EditBotPageState extends State<EditBotPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Edit bot',
+        title: Text(
+          'bot.edit_bot'.tr(),
           style: TextStyle(
             color: Colors.black87,
             fontSize: 18,
@@ -534,8 +535,8 @@ class _EditBotPageState extends State<EditBotPage> {
             ),
             elevation: 0,
           ),
-          child: const Text(
-            'Save changes',
+          child: Text(
+            'common.save'.tr(),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),

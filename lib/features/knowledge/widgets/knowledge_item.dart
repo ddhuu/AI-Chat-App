@@ -2,13 +2,10 @@
 import 'package:flutter/material.dart';
 
 class KnowledgeItem {
-  final String id; // <-- THÊM MỚI
+  final String id;
   String title;
   String description;
 
-  KnowledgeItem({
-    required this.title,
-    required this.description,
-    String? id, // <-- THÊM MỚI
-  }) : id = id ?? UniqueKey().toString(); // <-- THÊM MỚI: Tự động tạo ID nếu không có
+  KnowledgeItem({required this.title, required this.description, String? id})
+    : id = id ?? UniqueKey().toString();
 }

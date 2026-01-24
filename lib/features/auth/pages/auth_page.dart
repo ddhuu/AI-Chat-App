@@ -4,8 +4,8 @@ import 'package:ai_chat_assistant/shared/providers/auth_provider.dart';
 import 'package:ai_chat_assistant/shared/widgets/ad_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/colors.dart';
-import '../../../core/constants/strings.dart';
 import '../widgets/auth_logo.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/password_field.dart';
@@ -65,31 +65,31 @@ class _AuthPageState extends State<AuthPage> {
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return AppStrings.emailRequired;
+      return 'auth.email_required'.tr();
     }
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
-      return AppStrings.emailInvalid;
+      return 'auth.email_invalid'.tr();
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return AppStrings.passwordRequired;
+      return 'auth.password_required'.tr();
     }
     if (value.length < 6) {
-      return AppStrings.passwordTooShort;
+      return 'auth.password_too_short'.tr();
     }
     return null;
   }
 
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return AppStrings.confirmPasswordRequired;
+      return 'auth.confirm_password_required'.tr();
     }
     if (value != _passwordController.text) {
-      return AppStrings.passwordNotMatch;
+      return 'auth.passwords_do_not_match'.tr();
     }
     return null;
   }
@@ -121,7 +121,7 @@ class _AuthPageState extends State<AuthPage> {
     if (!mounted) return;
 
     if (result == "success") {
-      _showSuccess(AppStrings.loginSuccess);
+      _showSuccess('auth.login_success'.tr());
       // Navigate to ChatPage
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
@@ -172,7 +172,7 @@ class _AuthPageState extends State<AuthPage> {
     if (!mounted) return;
 
     if (result == "success") {
-      _showSuccess(AppStrings.registerSuccess);
+      _showSuccess('auth.register_success'.tr());
       // Switch to login
       _switchState(AuthState.login);
     } else {
@@ -196,7 +196,7 @@ class _AuthPageState extends State<AuthPage> {
     setState(() => _isLoading = false);
 
     if (mounted) {
-      _showSuccess(AppStrings.resetLinkSent);
+      _showSuccess('auth.reset_link_sent'.tr());
       // Switch to login
       _switchState(AuthState.login);
     }
@@ -246,14 +246,14 @@ class _AuthPageState extends State<AuthPage> {
                     children: [
                       Expanded(
                         child: _buildTabButton(
-                          text: AppStrings.login,
+                          text: 'auth.login'.tr(),
                           isSelected: _currentState == AuthState.login,
                           onTap: () => _switchState(AuthState.login),
                         ),
                       ),
                       Expanded(
                         child: _buildTabButton(
-                          text: AppStrings.register,
+                          text: 'auth.register'.tr(),
                           isSelected: _currentState == AuthState.register,
                           onTap: () => _switchState(AuthState.register),
                         ),
@@ -286,8 +286,8 @@ class _AuthPageState extends State<AuthPage> {
     return Column(
       children: [
         // Title
-        const Text(
-          AppStrings.forgotPassword,
+        Text(
+          'auth.forgot_password'.tr(),
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -295,8 +295,8 @@ class _AuthPageState extends State<AuthPage> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Nhập email để nhận link đặt lại mật khẩu',
+        Text(
+          'auth.forgot_password_instruction'.tr(),
           style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           textAlign: TextAlign.center,
         ),
@@ -306,7 +306,7 @@ class _AuthPageState extends State<AuthPage> {
         AuthTextField(
           controller: _emailController,
           focusNode: _emailFocus,
-          label: AppStrings.email,
+          label: 'auth.email'.tr(),
           hintText: 'example@email.com',
           keyboardType: TextInputType.emailAddress,
           validator: _validateEmail,
@@ -315,7 +315,7 @@ class _AuthPageState extends State<AuthPage> {
 
         // Reset Button
         AuthButton(
-          text: AppStrings.sendResetLink,
+          text: 'auth.send_reset_link'.tr(),
           onPressed: _isLoading ? null : _handleForgotPassword,
           isLoading: _isLoading,
         ),
@@ -324,8 +324,8 @@ class _AuthPageState extends State<AuthPage> {
         // Back to Login
         TextButton(
           onPressed: () => _switchState(AuthState.login),
-          child: const Text(
-            AppStrings.backToLogin,
+          child: Text(
+            'auth.back_to_login'.tr(),
             style: TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.w600,
@@ -345,7 +345,7 @@ class _AuthPageState extends State<AuthPage> {
           controller: _emailController,
           focusNode: _emailFocus,
           nextFocusNode: _passwordFocus,
-          label: AppStrings.email,
+          label: 'auth.email'.tr(),
           hintText: 'example@email.com',
           keyboardType: TextInputType.emailAddress,
           validator: _validateEmail,
@@ -357,7 +357,7 @@ class _AuthPageState extends State<AuthPage> {
           controller: _passwordController,
           focusNode: _passwordFocus,
           nextFocusNode: isLogin ? null : _confirmPasswordFocus,
-          label: AppStrings.password,
+          label: 'auth.password'.tr(),
           validator: _validatePassword,
         ),
         const SizedBox(height: 16),
@@ -367,7 +367,7 @@ class _AuthPageState extends State<AuthPage> {
           PasswordField(
             controller: _confirmPasswordController,
             focusNode: _confirmPasswordFocus,
-            label: AppStrings.confirmPassword,
+            label: 'auth.confirm_password'.tr(),
             validator: _validateConfirmPassword,
           ),
           const SizedBox(height: 16),
@@ -379,8 +379,8 @@ class _AuthPageState extends State<AuthPage> {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () => _switchState(AuthState.forgotPassword),
-              child: const Text(
-                AppStrings.forgotPassword,
+              child: Text(
+                'auth.forgot_password'.tr(),
                 style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 14,
@@ -394,7 +394,7 @@ class _AuthPageState extends State<AuthPage> {
 
         // Submit Button
         AuthButton(
-          text: isLogin ? AppStrings.login : AppStrings.createAccount,
+          text: isLogin ? 'auth.login'.tr() : 'auth.create_account'.tr(),
           onPressed: _isLoading
               ? null
               : (isLogin ? _handleLogin : _handleRegister),
@@ -414,8 +414,8 @@ class _AuthPageState extends State<AuthPage> {
           children: [
             Text(
               isLogin
-                  ? AppStrings.dontHaveAccount
-                  : AppStrings.alreadyHaveAccount,
+                  ? 'auth.dont_have_account'.tr()
+                  : 'auth.already_have_account'.tr(),
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
@@ -425,7 +425,7 @@ class _AuthPageState extends State<AuthPage> {
               onPressed: () =>
                   _switchState(isLogin ? AuthState.register : AuthState.login),
               child: Text(
-                isLogin ? AppStrings.registerNow : AppStrings.loginNow,
+                isLogin ? 'auth.register_now'.tr() : 'auth.login_now'.tr(),
                 style: const TextStyle(
                   color: AppColors.primary,
                   fontSize: 14,

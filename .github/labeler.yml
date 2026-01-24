@@ -1,0 +1,55 @@
+# Auto-labeling configuration for PRs
+
+# Feature labels
+'feature':
+  - 'lib/features/**/*'
+
+'ui':
+  - 'lib/**/*_page.dart'
+  - 'lib/**/*_widget.dart'
+  - 'lib/**/widgets/**/*'
+
+'api':
+  - 'lib/**/*_service.dart'
+  - 'lib/**/services/**/*'
+
+'model':
+  - 'lib/**/*_model.dart'
+  - 'lib/**/models/**/*'
+
+'provider':
+  - 'lib/**/*_provider.dart'
+  - 'lib/**/providers/**/*'
+
+# Platform labels
+'android':
+  - 'android/**/*'
+
+'ios':
+  - 'ios/**/*'
+
+'web':
+  - 'web/**/*'
+
+# Configuration labels
+'dependencies':
+  - 'pubspec.yaml'
+  - 'pubspec.lock'
+
+'ci/cd':
+  - '.github/workflows/**/*'
+
+'documentation':
+  - '**/*.md'
+  - 'docs/**/*'
+
+'tests':
+  - 'test/**/*'
+  - '**/*_test.dart'
+
+'assets':
+  - 'assets/**/*'
+  - 'lib/core/constants/**/*'
+
+'translation':
+  - 'assets/translations/**/*'

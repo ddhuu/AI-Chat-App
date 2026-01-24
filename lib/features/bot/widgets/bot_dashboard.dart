@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/colors.dart';
-import '../../../core/constants/strings.dart';
 
 class BotDashboard extends StatefulWidget {
   final Function(String) onFilterChanged;
@@ -38,11 +38,8 @@ class _BotDashboardState extends State<BotDashboard> {
           controller: _searchController,
           onChanged: widget.onSearch,
           decoration: InputDecoration(
-            hintText: AppStrings.searchBots,
-            hintStyle: const TextStyle(
-              color: AppColors.textHint,
-              fontSize: 15,
-            ),
+            hintText: 'bot.search_bots'.tr(),
+            hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 15),
             prefixIcon: const Icon(
               Icons.search,
               color: AppColors.textSecondary,
@@ -64,10 +61,7 @@ class _BotDashboardState extends State<BotDashboard> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.primary,
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
           ),
         ),
@@ -103,14 +97,14 @@ class _BotDashboardState extends State<BotDashboard> {
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: 'all',
-                        child: Text(AppStrings.allBots),
+                        child: Text('bot.all_bots'.tr()),
                       ),
                       DropdownMenuItem(
                         value: 'favorite',
-                        child: Text(AppStrings.favoriteBots),
+                        child: Text('bot.favorite_bots'.tr()),
                       ),
                     ],
                     onChanged: (value) {
@@ -130,12 +124,9 @@ class _BotDashboardState extends State<BotDashboard> {
             ElevatedButton.icon(
               onPressed: widget.onCreateBot,
               icon: const Icon(Icons.add, size: 20),
-              label: const Text(
-                'Create Bot',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+              label: Text(
+                'bot.create_bot'.tr(),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,

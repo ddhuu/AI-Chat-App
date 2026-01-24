@@ -88,34 +88,8 @@ class KnowledgeItemCard extends StatelessWidget {
                 item.description,
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  _buildTag('0 units', Colors.green),
-                  const SizedBox(width: 8),
-                  _buildTag('0 B', Colors.purple),
-                ],
-              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTag(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w500,
-          fontSize: 12,
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:ai_chat_assistant/core/utils/event_bus.dart';
+import 'package:ai_chat_assistant/core/config/env_config.dart';
 import 'package:ai_chat_assistant/data/services/api_service.dart';
 import 'package:ai_chat_assistant/features/auth/pages/auth_page.dart';
 import 'package:ai_chat_assistant/features/bot/providers/assistant_provider.dart';
@@ -12,18 +13,30 @@ import 'package:ai_chat_assistant/shared/providers/token_usage_provider.dart';
 import 'package:ai_chat_assistant/shared/widgets/ad_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'core/theme/AppTheme.dart';
 import 'features/chat/chat_page.dart';
 import 'features/knowledge/services/import_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
+
+  // Initialize environment variables
+  await EnvConfig.initialize();
 
   // Initialize ApiService
   final apiService = ApiService();
   await apiService.init();
 
-  runApp(MyApp(apiService: apiService));
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('en'), Locale('vi')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('vi'),
+      child: MyApp(apiService: apiService),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -115,6 +128,9 @@ class _MyAppState extends State<MyApp> {
         title: 'Jarvis AI Chat',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
         home: const SplashScreen(),
       ),
     );

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/strings.dart';
 import '../models/knowledge_model.dart';
@@ -6,10 +8,7 @@ import '../models/knowledge_model.dart';
 class SelectKnowledgeDialog extends StatefulWidget {
   final List<String> selectedKnowledgeIds;
 
-  const SelectKnowledgeDialog({
-    super.key,
-    required this.selectedKnowledgeIds,
-  });
+  const SelectKnowledgeDialog({super.key, required this.selectedKnowledgeIds});
 
   @override
   State<SelectKnowledgeDialog> createState() => _SelectKnowledgeDialogState();
@@ -47,9 +46,7 @@ class _SelectKnowledgeDialogState extends State<SelectKnowledgeDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.7,
@@ -95,7 +92,7 @@ class _SelectKnowledgeDialogState extends State<SelectKnowledgeDialog> {
                 controller: _searchController,
                 onChanged: _filterKnowledge,
                 decoration: InputDecoration(
-                  hintText: 'Tìm kiếm tri thức...',
+                  hintText: 'knowledge.search_knowledge'.tr(),
                   hintStyle: const TextStyle(
                     color: AppColors.textHint,
                     fontSize: 14,
@@ -125,9 +122,7 @@ class _SelectKnowledgeDialogState extends State<SelectKnowledgeDialog> {
                   ? const Center(
                       child: Text(
                         AppStrings.noKnowledge,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                     )
                   : ListView.builder(
@@ -135,8 +130,9 @@ class _SelectKnowledgeDialogState extends State<SelectKnowledgeDialog> {
                       itemCount: _filteredKnowledge.length,
                       itemBuilder: (context, index) {
                         final knowledge = _filteredKnowledge[index];
-                        final isSelected =
-                            widget.selectedKnowledgeIds.contains(knowledge.id);
+                        final isSelected = widget.selectedKnowledgeIds.contains(
+                          knowledge.id,
+                        );
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
