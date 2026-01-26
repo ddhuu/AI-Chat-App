@@ -1,14 +1,3 @@
-# Advanced Mobile Programming - Final Project
-
-## Team Information
-**Course:** Advanced Mobile Programming  
-
-### Team Members
-- **21120460** - Nguyễn Tấn Hùng
-- **21120465** - Đoàn Đức Hữu  
-- **21120393** - Nguyễn Hữu Thương
-
----
 
 
 
